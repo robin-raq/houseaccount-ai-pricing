@@ -1,0 +1,9 @@
+log
+tmp
+.bundle
+vendor/bundle
+node_modules
+config/master.key
+storage
+Dockerfile
+.dockerignore

@@ -93,3 +93,14 @@ the skill keeps so the human can follow along without being interrupted.
 - LOW fixes: None-vs-0 estimate bounds, unknown-month sentinel, demo 503 on model-service error, constant-time hash
   compare, removed dead RequestLog.clear, evaluation baseline constants, doc precision (31 real jobs, preflight wording,
   thin-blended-margin note, broad-seed real number). Retrained; re-verified.
+
+## Phase 4/5 — Deploy + demo
+- Public repo pushed: github.com/robin-raq/houseaccount-ai-pricing (clean, no secrets, model artifact shipped).
+- Railway: two services in project `houseaccount-pricing`. Model (Python) is PRIVATE (no domain); Rails api is public
+  at api-production-fcf4.up.railway.app, reaching the model via `model.railway.internal:8080`. Secrets in Railway store.
+- Deploy gotchas fixed: (1) `--path-as-root` broke the `*.joblib` gitignore negation → model shipped as StubModel;
+  redeployed with `--no-gitignore` + `.railwayignore` so the real model loads. (2) Rails' generated Dockerfile ran
+  Thruster on :80 not Railway's $PORT → healthcheck failed; excluded Dockerfile from the upload so Nixpacks honors the
+  railway.toml startCommand (Puma binds $PORT). Both fixed via .railwayignore (committed).
+- Deployed verification: UI 200; /demo/model live numbers via private link; real-model estimate $1824 @0.86, 1278ms;
+  contract 200 w/ bearer (1.73s incl warmup) / 401 without; Playwright live-verify green, 0 console errors, both bars BEAT.
