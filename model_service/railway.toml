@@ -1,0 +1,12 @@
+# Railway config for the Python model service (set this service's Root Directory to `model_service`).
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "uv run uvicorn service.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+restartPolicyType = "ON_FAILURE"
+
+# Required env (set as a service variable):
+#   OPENAI_API_KEY   powers LLM scope extraction (with deterministic fallback)
+# The trained model ships in the repo at model/model.joblib — no training at deploy time.

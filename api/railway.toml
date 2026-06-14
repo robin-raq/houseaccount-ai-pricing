@@ -1,0 +1,15 @@
+# Railway config for the Rails API service (set this service's Root Directory to `api`).
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "bundle exec rails server -b 0.0.0.0 -p $PORT"
+healthcheckPath = "/up"
+restartPolicyType = "ON_FAILURE"
+
+# Required env (set as service variables):
+#   GAUNTLET_PRICING_SECRET  bearer secret for /pricing-estimate
+#   MODEL_SERVICE_URL        URL of the Python model service
+#   SECRET_KEY_BASE          `openssl rand -hex 64`
+#   RAILS_ENV=production
+# Optional: STAGING_BOOKINGS_URL, STAGING_BOOKINGS_TOKEN
