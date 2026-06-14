@@ -12,3 +12,15 @@ globally-unique `job_description` (augmented rows reuse templates). Both the shi
 model and the deterministic-only fallback beat both baselines.
 
 _Regenerate: `make train` (model accuracy) and `make verify` (code gates)._
+
+## Code quality gates (`scripts/verify.sh`)
+
+```
+    [PASS]
+    [PASS]
+    [PASS]
+    [PASS]
+    [PASS]
+    [PASS]
+RESULT: ALL GREEN — every advertised quality gate passed.
+```
