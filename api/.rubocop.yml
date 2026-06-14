@@ -1,0 +1,13 @@
+# Omakase Ruby styling for Rails
+inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+
+# Pin the two rules the public HouseAccount STYLE.md calls out explicitly:
+# 100-char lines and the outdented access-modifier style.
+AllCops:
+  TargetRubyVersion: 3.4
+
+Layout/LineLength:
+  Max: 100
+
+Layout/AccessModifierIndentation:
+  EnforcedStyle: outdent
