@@ -8,5 +8,55 @@
   "real_mape": 29.86,
   "deterministic_blended_mape": 10.86,
   "deterministic_real_mape": 30.43,
-  "conformal_coverage": 0.8
+  "conformal_coverage": 0.8,
+  "per_category": [
+    {
+      "category": "Cleaning",
+      "n": 66,
+      "mape": 8.8,
+      "baseline": 8.7
+    },
+    {
+      "category": "Moving",
+      "n": 66,
+      "mape": 9.7,
+      "baseline": 9.2
+    },
+    {
+      "category": "HVAC",
+      "n": 65,
+      "mape": 9.2,
+      "baseline": 9.7
+    },
+    {
+      "category": "Landscaping",
+      "n": 65,
+      "mape": 9.5,
+      "baseline": 9.7
+    },
+    {
+      "category": "Pest Control",
+      "n": 65,
+      "mape": 9.1,
+      "baseline": 10.2
+    },
+    {
+      "category": "Appliance Repair",
+      "n": 33,
+      "mape": 11.4,
+      "baseline": 12.6
+    },
+    {
+      "category": "Roofing",
+      "n": 24,
+      "mape": 7.5,
+      "baseline": 9.3
+    },
+    {
+      "category": "Handyman",
+      "n": 14,
+      "mape": 34.2,
+      "baseline": 48.4
+    }
+  ]
 }

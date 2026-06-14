@@ -1,7 +1,7 @@
 # Implements the Appendix A contract: bearer auth, required-field validation,
 # delegation to the model service, and the wrapped { ok: true, ... } response.
 class PricingEstimatesController < ApplicationController
-  REQUIRED_FIELDS = %w[job_id service_category zip_code job_description].freeze
+  include Priceable
 
   before_action :authenticate_bearer!
 
@@ -14,18 +14,6 @@ class PricingEstimatesController < ApplicationController
   end
 
 private
-
-  def blank_required_field
-    REQUIRED_FIELDS.find { |field| params[field].blank? }
-  end
-
-  def booking_payload
-    params.permit(
-      :job_id, :service_category, :service_subtype, :zip_code, :job_description,
-      :deadline, :booking_month, :job_status, :original_estimate,
-      :original_estimate_lo, :original_estimate_hi
-    ).to_h
-  end
 
   def success_body(estimate)
     {

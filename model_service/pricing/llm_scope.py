@@ -15,6 +15,16 @@ import os
 _MODEL = os.environ.get("PRICING_SCOPE_MODEL", "gpt-4o-mini")
 _TIMEOUT_S = float(os.environ.get("PRICING_SCOPE_TIMEOUT_S", "1.5"))
 _cache: dict[str, dict[str, str]] = {}
+_client = None  # reused across calls so the connection pool stays warm (SLA)
+
+
+def _client_for():
+    global _client
+    if _client is None:
+        from openai import OpenAI
+
+        _client = OpenAI(timeout=_TIMEOUT_S)
+    return _client
 
 _SYSTEM = (
     "You convert a homeowner's free-text home-service request into structured scope "
@@ -46,11 +56,8 @@ def extract_scope_llm(
         return _cache[cache_key]
 
     try:
-        from openai import OpenAI
-
-        client = OpenAI(timeout=_TIMEOUT_S)
         user = f"Category: {service_category}\nSubtype: {service_subtype}\nRequest: {description}"
-        completion = client.chat.completions.create(
+        completion = _client_for().chat.completions.create(
             model=_MODEL,
             temperature=0,
             max_tokens=300,

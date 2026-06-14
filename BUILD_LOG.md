@@ -73,3 +73,14 @@ the skill keeps so the human can follow along without being interrupted.
   **30.43→29.86** (lower variance), blended unchanged. Deterministic scope alone also beats both bars.
 - DECISION: ship **LLM-scope model** (verycons+weight+shrink0.7) with deterministic scope as tested fallback;
   report both numbers. Honors the hybrid; deterministic core is the robustness guarantee.
+- Fixed calibration: OOD base = dataset median observed range (~$212), and conformal normalized by the prior's
+  band so confidence varies by difficulty (0.76–0.86 in-dist, <0.5 OOD). Spurious OOD on legit jobs gone.
+- Shipped model artifact (model/model.joblib + model_meta.json incl. per-category) committed; raw CSV stays out.
+- Demo layer: Priceable concern (DRY), Demo::EstimatesController (#create no-auth playground, #index recent log),
+  Demo::ModelsController (meta proxy), RequestLog (in-memory), StagingClient (best-effort, stub when no URL).
+  9 Rails request specs green.
+- Live UI: api/public/index.html (extends the mockup) — fetches /demo/model + /demo/estimates, renders real
+  estimates/scope/OOD, live eval numbers + per-category table.
+- SLA: LLM client singleton + boot warmup → novel requests ~1.1–1.3s, cache hits ~30ms (< 2s target).
+- Full local integration verified: model service (:8010) + Rails (:3001). Contract 200 w/ bearer, 401 without;
+  demo estimate 1315ms; live-verify (Playwright) green, 0 console errors, both eval badges BEAT BASELINE.

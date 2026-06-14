@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HouseAccount · AI Pricing Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --navy: #143c55; --navy-deep: #0e2c40; --blue: #2d62ff; --amber: #ffb959;
+    --pink: #dd23bb; --light-blue: #def2ff; --blue-wash: #d9e5ff; --white: #fff;
+    --ink: #0b1a25; --gray: #6e777d; --neutral-darker: #222; --line: #e7ebee; --bg: #f6f8fa;
+    --success-bg: #cef5ca; --success-fg: #114e0b; --warn-bg: #fcf8d8; --warn-fg: #5e5515;
+    --error-bg: #f8e4e4; --error-fg: #3b0b0b; --radius-card: 8px; --radius-pill: 100px;
+    --shadow-sm: rgba(39,56,66,0.08) 0 10px 16px 0; --shadow-md: rgba(20,60,85,0.10) 0 10px 30px 0;
+    --font: 'Mulish', 'Helvetica Neue', Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: var(--font); font-weight: 300; font-size: 16px; line-height: 1.5;
+    color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+  h1,h2,h3,h4 { color: var(--navy); font-weight: 800; line-height: 1.15; margin: 0 0 .4em; }
+  h1 { font-size: 30px; letter-spacing: -0.01em; } h2 { font-size: 22px; }
+  h3 { font-size: 16px; font-weight: 700; }
+  p { margin: 0 0 1em; color: var(--neutral-darker); }
+  a { color: var(--blue); text-decoration: none; } small { color: var(--gray); }
+  code, pre, .mono { font-family: 'SFMono-Regular','JetBrains Mono',Menlo,Consolas,monospace; }
+  .topbar { background: var(--navy); color: #fff; position: sticky; top: 0; z-index: 20; box-shadow: var(--shadow-sm); }
+  .topbar-inner { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; gap: 28px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: #fff; }
+  .brand .glyph { width: 26px; height: 26px; flex: 0 0 26px; }
+  .nav { display: flex; gap: 4px; margin-left: 8px; }
+  .nav button { background: transparent; border: 0; color: rgba(255,255,255,0.72); font-family: var(--font);
+    font-size: 15px; font-weight: 600; padding: 8px 14px; border-radius: var(--radius-pill); cursor: pointer; transition: .15s; }
+  .nav button:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .nav button.active { color: var(--navy); background: var(--amber); }
+  .topbar .spacer { flex: 1; }
+  .ver-pill { font-size: 12px; font-weight: 700; color: var(--light-blue); border: 1px solid rgba(255,255,255,0.22);
+    border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap; }
+  .ver-pill .dot { color: #69f0ae; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
+  .screen { display: none; animation: fade .25s ease; } .screen.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px);} to {opacity:1; transform:none;} }
+  .page-head { margin-bottom: 22px; }
+  .page-head .eyebrow { color: var(--blue); font-weight: 700; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+  .page-head p { max-width: 720px; color: var(--gray); }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow-sm); }
+  .card.pad { padding: 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  @media (max-width: 900px){ .grid-2 { grid-template-columns: 1fr; } }
+  .btn { font-family: var(--font); font-weight: 700; font-size: 15px; cursor: pointer; border-radius: var(--radius-pill);
+    padding: 11px 22px; border: 2px solid transparent; transition: .15s; }
+  .btn-amber { background: var(--amber); color: var(--navy); } .btn-amber:hover { filter: brightness(0.97); }
+  .btn-ghost { background: #fff; color: var(--navy); border-color: var(--line); }
+  .btn-ghost:hover { border-color: var(--blue); color: var(--blue); }
+  .btn[disabled] { opacity: .6; cursor: default; }
+  label.field { display: block; margin-bottom: 14px; }
+  label.field > span { display: block; font-weight: 700; font-size: 13px; color: var(--navy); margin-bottom: 6px; }
+  input[type=text], input[type=number], select, textarea { width: 100%; font-family: var(--font); font-size: 15px;
+    color: var(--ink); padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-card); background: #fcfdfe; transition: .15s; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(45,98,255,0.12); }
+  textarea { resize: vertical; min-height: 88px; line-height: 1.45; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .chip { font-size: 12.5px; font-weight: 600; color: var(--navy); background: var(--light-blue); border: 1px solid transparent;
+    border-radius: var(--radius-pill); padding: 6px 12px; cursor: pointer; transition: .15s; }
+  .chip:hover { border-color: var(--blue); }
+  details.adv { margin: 4px 0 16px; } details.adv summary { cursor: pointer; font-weight: 700; font-size: 13px; color: var(--blue); }
+  .result-empty { color: var(--gray); text-align: center; padding: 70px 16px; }
+  .price-big { font-size: 40px; font-weight: 800; color: var(--navy); letter-spacing: -0.02em; }
+  .midline { color: var(--gray); font-weight: 600; margin-top: 2px; }
+  .rangebar { position: relative; height: 12px; background: var(--blue-wash); border-radius: var(--radius-pill); margin: 22px 0 6px; }
+  .rangebar .mid { position: absolute; top: -5px; width: 3px; height: 22px; background: var(--navy); border-radius: 2px; }
+  .range-legend { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray); font-weight: 600; }
+  .conf { margin-top: 22px; } .conf-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .conf-val { font-size: 26px; font-weight: 800; color: var(--navy); }
+  .conf-band { position: relative; height: 10px; border-radius: var(--radius-pill); margin: 12px 0 6px;
+    background: linear-gradient(90deg, #f3a3a3 0 33%, #ffd98a 33% 60%, #9bd99a 60% 100%); }
+  .conf-band .needle { position: absolute; top: -4px; width: 4px; height: 18px; background: var(--navy); border-radius: 2px; transform: translateX(-50%); }
+  .conf-ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray); font-weight: 600; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; border-radius: var(--radius-pill); padding: 4px 11px; }
+  .tag-ok { background: var(--success-bg); color: var(--success-fg); } .tag-warn { background: var(--warn-bg); color: var(--warn-fg); }
+  .tag-info { background: var(--light-blue); color: var(--navy); }
+  .scope { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px; }
+  .scope h3 { display: flex; align-items: center; gap: 7px; }
+  .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; margin-top: 8px; }
+  .scope-grid div { font-size: 13.5px; } .scope-grid b { color: var(--navy); }
+  .scope .src { font-size: 11.5px; color: var(--gray); margin-top: 10px; }
+  .meta-row { display: flex; gap: 16px; margin-top: 16px; font-size: 12.5px; color: var(--gray); flex-wrap: wrap; }
+  .meta-row b { color: var(--navy); }
+  .metric { padding: 22px; } .metric .lab { font-size: 13px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .03em; }
+  .metric .big { font-size: 38px; font-weight: 800; color: var(--navy); margin: 6px 0 2px; } .metric .vs { font-size: 13px; color: var(--gray); }
+  .delta.good { color: #1a8f3c; font-weight: 800; } .delta.bad { color: #c0392b; font-weight: 800; }
+  .badge { font-size: 12px; font-weight: 800; border-radius: var(--radius-pill); padding: 4px 12px; }
+  .badge.pass { background: var(--success-bg); color: var(--success-fg); } .badge.fail { background: var(--error-bg); color: var(--error-fg); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--gray); font-weight: 700; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; } tr:last-child td { border-bottom: 0; }
+  .mc-section { margin-bottom: 18px; } .mc-section h3 { color: var(--blue); text-transform: uppercase; letter-spacing: .03em; font-size: 12.5px; }
+  ul.clean { margin: 0; padding-left: 18px; } ul.clean li { margin-bottom: 6px; font-size: 14.5px; }
+  .pill-list { display: flex; flex-wrap: wrap; gap: 7px; } .pill-list .p { font-size: 12.5px; font-weight: 600; border-radius: var(--radius-pill); padding: 5px 12px; }
+  .p.prod { background: var(--success-bg); color: var(--success-fg); } .p.ext { background: var(--warn-bg); color: var(--warn-fg); }
+  pre.code { background: var(--navy-deep); color: #dbe7f5; border-radius: var(--radius-card); padding: 16px 18px; overflow:auto; font-size: 13px; line-height: 1.55; }
+  pre.code .k { color: #ffd98a; } pre.code .s { color: #9bd99a; } pre.code .c { color: #7d93a8; }
+  .method { font-weight: 800; color: #fff; background: var(--blue); border-radius: 5px; padding: 2px 9px; font-size: 12px; }
+  .status-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-ok { background: #1a8f3c; } .dot-warn { background: var(--amber); } .dot-off { background: #ccc; }
+  .foot { text-align: center; color: var(--gray); font-size: 13px; padding: 26px 0 8px; }
+  .spin { display:inline-block; width:14px; height:14px; border:2px solid rgba(20,60,85,.25); border-top-color: var(--navy); border-radius:50%; animation: rot .7s linear infinite; vertical-align:-2px; }
+  @keyframes rot { to { transform: rotate(360deg);} }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg class="glyph" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M16 3 4 13v15a1 1 0 0 0 1 1h7v-9h8v9h7a1 1 0 0 0 1-1V13L16 3Z" fill="#ffb959"/>
+        <path d="M16 3 4 13h24L16 3Z" fill="#fff"/></svg>
+      HouseAccount
+    </div>
+    <nav class="nav" id="nav">
+      <button data-screen="estimate" class="active">Estimate</button>
+      <button data-screen="evaluate">Evaluation</button>
+      <button data-screen="model">Model Card</button>
+      <button data-screen="api">API &amp; Integration</button>
+    </nav>
+    <div class="spacer"></div>
+    <span class="ver-pill"><span class="dot">●</span> <span id="ver">loading…</span></span>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ESTIMATE -->
+  <section class="screen active" id="estimate">
+    <div class="page-head">
+      <div class="eyebrow">Booking-time estimate · live</div>
+      <h1>Price a job the moment it's booked</h1>
+      <p>Enter a homeowner's request as it arrives. The engine returns a transparent price range,
+         a calibrated confidence, and the scope signals it read from the description.</p>
+    </div>
+    <div class="grid-2">
+      <div class="card pad">
+        <div class="chips" id="examples">
+          <span class="chip" data-ex="water">💧 Water heater</span>
+          <span class="chip" data-ex="bugs">🐞 Bed bugs</span>
+          <span class="chip" data-ex="windows">🪟 Window wash</span>
+          <span class="chip" data-ex="ood">⚠️ Whole-home remodel</span>
+        </div>
+        <label class="field"><span>Service category</span>
+          <select id="f-cat">
+            <option>Plumbing</option><option>Pest Control</option><option selected>Cleaning</option>
+            <option>Painting</option><option>Electrical</option><option>HVAC</option>
+            <option>Landscaping</option><option>Handyman</option><option>Roofing</option>
+            <option>Flooring</option><option>Appliance Repair</option><option>Exterior</option>
+            <option>Chimney</option><option>Pool</option><option>Moving</option><option>Auto</option>
+            <option>General Contractor</option><option>Remodeling</option>
+          </select></label>
+        <div class="row-2">
+          <label class="field"><span>Service subtype</span><input type="text" id="f-sub" value="Window washing (exterior)" /></label>
+          <label class="field"><span>ZIP code</span><input type="text" id="f-zip" value="75062" maxlength="5" /></label>
+        </div>
+        <label class="field"><span>Job description</span>
+          <textarea id="f-desc">Exterior window wash, 2-story, 20 windows</textarea></label>
+        <div class="row-2">
+          <label class="field"><span>Deadline</span>
+            <select id="f-deadline"><option>As soon as possible</option><option selected>Within 1-2 weeks</option>
+              <option>Within 1 month</option><option>I'm flexible</option></select></label>
+          <label class="field"><span>Booking month</span><input type="text" id="f-month" value="2026-05" /></label>
+        </div>
+        <details class="adv"><summary>I have a previous estimate (optional)</summary>
+          <div class="row-2" style="margin-top:10px">
+            <label class="field"><span>Original low</span><input type="number" id="f-olo" value="172" /></label>
+            <label class="field"><span>Original high</span><input type="number" id="f-ohi" value="344" /></label>
+          </div></details>
+        <button class="btn btn-amber" id="getBtn" style="width:100%">Get estimate</button>
+      </div>
+      <div class="card pad" id="resultCard">
+        <div class="result-empty" id="resultEmpty">Enter a booking and click <b>Get estimate</b> to see a live price.</div>
+        <div id="resultBody" style="display:none"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVALUATION -->
+  <section class="screen" id="evaluate">
+    <div class="page-head">
+      <div class="eyebrow">Accuracy vs. baseline · live numbers</div>
+      <h1>Does it beat the current model?</h1>
+      <p>Both MAPE numbers come from grouped cross-validation (by description, leakage-free) on the
+         priced rows. The bar is the existing AI-estimate baseline. We must beat both.</p>
+    </div>
+    <div class="grid-2" style="margin-bottom:22px" id="evalCards">
+      <div class="card metric"><div class="lab">Blended MAPE · priced rows</div><div class="big" id="evBlended">—</div></div>
+      <div class="card metric"><div class="lab">Real-only MAPE · real jobs</div><div class="big" id="evReal">—</div></div>
+    </div>
+    <div class="card pad">
+      <h2>MAPE by service category</h2>
+      <table><thead><tr><th>Category</th><th class="num">n</th><th class="num">Our MAPE</th><th class="num">Baseline</th><th class="num">Δ</th></tr></thead>
+        <tbody id="catRows"><tr><td colspan="5"><span class="spin"></span> loading…</td></tr></tbody></table>
+      <small id="evalNote"></small>
+    </div>
+  </section>
+
+  <!-- MODEL CARD -->
+  <section class="screen" id="model">
+    <div class="page-head"><div class="eyebrow">Documented modeling approach</div>
+      <h1>How the estimate is made</h1>
+      <p>The data, the features, the model, and — most importantly — how confidence is computed
+         and when the engine admits it's guessing.</p></div>
+    <div class="grid-2">
+      <div class="card pad">
+        <div class="mc-section"><h3>Data &amp; model</h3>
+          <ul class="clean">
+            <li>1,432 sanitized jobs, 18 categories; <b id="mcPriced">411</b> carry a final price (training signal)</li>
+            <li>Correction model on the previous estimate: gradient-boosted residual on log-price</li>
+            <li>Features: prior estimate + band, ZIP region, subtype, urgency, seasonality, and
+                <b>LLM-extracted scope</b> (complexity, labor hours, area, material tier)</li>
+            <li>Normalized split-conformal intervals — calibrated, distribution-free</li>
+          </ul></div>
+        <div class="mc-section"><h3>How confidence is calculated</h3>
+          <p style="font-size:14.5px">Confidence comes from the conformal interval width relative to the
+             estimate, scaled by the previous model's band so harder jobs read as less certain. Mapped to [0,1] and clamped.</p></div>
+        <div class="mc-section"><h3>Out-of-distribution → forced &lt; 0.5 (never rejected)</h3>
+          <ul class="clean"><li>Midpoint <b>&gt; $5,000</b></li><li>Interval wider than <b>3× the median observed range</b></li>
+            <li>Category outside the <b>10 production verticals</b></li></ul></div>
+      </div>
+      <div class="card pad">
+        <div class="mc-section"><h3>Category coverage</h3>
+          <p style="font-size:13.5px;margin-bottom:8px"><b>Full-confidence (production):</b></p>
+          <div class="pill-list" id="prodCats" style="margin-bottom:12px"></div>
+          <p style="font-size:13.5px;margin-bottom:8px"><b>Trained but reduced-confidence (expansion):</b></p>
+          <div class="pill-list" id="extCats"></div></div>
+        <div class="mc-section"><h3>Measured accuracy (grouped CV)</h3>
+          <p style="font-size:14.5px" id="mcAccuracy">loading…</p></div>
+        <div class="mc-section"><h3>Known limitations</h3>
+          <ul class="clean"><li>No square-footage / fixture fields in source — scope inferred from text</li>
+            <li>Sparse categories were augmented; real-job confidence is lower there</li>
+            <li>Month-level dates only</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- API -->
+  <section class="screen" id="api">
+    <div class="page-head"><div class="eyebrow">The contract</div><h1>API &amp; booking-flow integration</h1>
+      <p>The Rails service implements the Appendix A contract: bearer auth, structured booking in,
+         structured estimate out, and an outbound post into the HouseAccount booking flow.</p></div>
+    <div class="grid-2">
+      <div class="card pad">
+        <h2>Endpoint</h2>
+        <p><span class="method">POST</span> &nbsp;<code>/pricing-estimate</code></p>
+        <p style="font-size:13.5px;color:var(--gray)">Header <code>Authorization: Bearer &lt;secret&gt;</code> · constant-time compared · JSON.</p>
+        <pre class="code">{ <span class="k">"job_id"</span>:<span class="s">"abc123"</span>, <span class="k">"service_category"</span>:<span class="s">"Plumbing"</span>,
+  <span class="k">"zip_code"</span>:<span class="s">"78704"</span>,
+  <span class="k">"job_description"</span>:<span class="s">"50-gal water heater, replace"</span> }</pre>
+        <h3 style="margin-top:14px">Try the live engine</h3>
+        <button class="btn btn-ghost" id="runApi">▷ Run example booking</button>
+        <div id="apiOut" style="margin-top:12px"></div>
+      </div>
+      <div class="card pad">
+        <h2>Booking-flow integration</h2>
+        <p style="font-size:14px" id="stagingStatus"><span class="status-dot dot-off"></span> staging post status shows per request below.</p>
+        <h2 style="margin-top:8px">Recent requests</h2>
+        <table><thead><tr><th>job_id</th><th>category</th><th class="num">midpoint</th><th class="num">conf</th><th>staging</th></tr></thead>
+          <tbody id="logRows"><tr><td colspan="5"><small>No requests yet — price a booking on the Estimate tab.</small></td></tr></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">HouseAccount AI Pricing Engine · Rails API + Python model service</div>
+</main>
+
+<script>
+  const EXAMPLES = {
+    water: {cat:"Plumbing", sub:"Water Heater Replacement", zip:"78704",
+      desc:"50-gallon gas water heater stopped working last night, pilot light won't stay lit. Need replacement.", olo:1400, ohi:2300},
+    bugs: {cat:"Pest Control", sub:"Bed bugs", zip:"33324", desc:"Bed bug heat treatment, 2BR apartment", olo:486, ohi:1168},
+    windows: {cat:"Cleaning", sub:"Window washing (exterior)", zip:"75062", desc:"Exterior window wash, 2-story, 20 windows", olo:172, ohi:344},
+    ood: {cat:"Remodeling", sub:"Whole-home renovation", zip:"90210",
+      desc:"Full gut renovation of a 3,200 sq ft home — kitchen, 3 baths, flooring throughout, new electrical.", olo:70000, ohi:140000},
+  };
+  const $ = id => document.getElementById(id);
+  const money = n => "$" + Number(n).toLocaleString(undefined, {maximumFractionDigits:0});
+  const OOD_TEXT = {
+    midpoint_above_5000: "midpoint &gt; $5k",
+    interval_over_3x_median: "interval &gt; 3× median range",
+    category_outside_production_set: "category outside production set",
+  };
+
+  document.getElementById('nav').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === btn.dataset.screen));
+    if (btn.dataset.screen === 'api') loadRecent();
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+    const ex = EXAMPLES[c.dataset.ex];
+    $('f-cat').value = ex.cat; $('f-sub').value = ex.sub; $('f-zip').value = ex.zip;
+    $('f-desc').value = ex.desc; $('f-olo').value = ex.olo; $('f-ohi').value = ex.ohi;
+    getEstimate();
+  }));
+
+  function readForm() {
+    const body = {
+      job_id: "demo-" + Math.random().toString(36).slice(2, 8),
+      service_category: $('f-cat').value, service_subtype: $('f-sub').value,
+      zip_code: $('f-zip').value, job_description: $('f-desc').value,
+      deadline: $('f-deadline').value, booking_month: $('f-month').value,
+    };
+    const lo = parseFloat($('f-olo').value), hi = parseFloat($('f-ohi').value);
+    if (lo && hi) { body.original_estimate_lo = lo; body.original_estimate_hi = hi; body.original_estimate = (lo + hi) / 2; }
+    return body;
+  }
+
+  async function getEstimate() {
+    const btn = $('getBtn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Pricing…';
+    try {
+      const res = await fetch('/demo/estimates', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(readForm())});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'error');
+      renderResult(data);
+    } catch (err) {
+      $('resultEmpty').style.display = 'block'; $('resultEmpty').textContent = 'Could not price this booking: ' + err.message;
+      $('resultBody').style.display = 'none';
+    } finally { btn.disabled = false; btn.textContent = 'Get estimate'; }
+  }
+
+  function renderResult(d) {
+    $('resultEmpty').style.display = 'none';
+    const conf = Number(d.confidence), ood = d.ood_reasons || [];
+    const span = Math.max(d.estimate_hi * 1.15, 1);
+    const oodTag = ood.length
+      ? `<span class="tag tag-warn">⚠ Out-of-distribution — ${ood.map(r => OOD_TEXT[r] || r).join(' · ')} · confidence forced &lt; 0.5 · passed through, not rejected</span>`
+      : `<span class="tag tag-ok">✓ In-distribution — all calibration checks passed</span>`;
+    const scope = d.scope || {};
+    const scopeRows = Object.keys(scope).length
+      ? Object.entries(scope).map(([k,v]) => `<div><b>${k.replace(/_/g,' ')}:</b> ${v}</div>`).join('')
+      : '<div><small>No structured signals extracted.</small></div>';
+    $('resultBody').innerHTML = `
+      <div class="conf-head" style="margin-bottom:2px">
+        <div><div class="price-big">${money(d.estimate_lo)} – ${money(d.estimate_hi)}</div>
+          <div class="midline">Point estimate <b style="color:var(--navy)">${money(d.estimate_midpoint)}</b></div></div>
+        <span class="tag ${ood.length ? 'tag-warn':'tag-info'}">${d.staging_status === 'posted' ? 'posted to staging' : 'staging: ' + d.staging_status}</span>
+      </div>
+      <div class="rangebar"><div class="mid" style="left:${Math.min(98, d.estimate_midpoint/span*100)}%"></div></div>
+      <div class="range-legend"><span>$0</span><span>typical band</span><span>${money(span)}</span></div>
+      <div class="conf"><div class="conf-head"><h3 style="margin:0">Confidence</h3><span class="conf-val">${conf.toFixed(2)}</span></div>
+        <div class="conf-band"><div class="needle" style="left:${conf*100}%"></div></div>
+        <div class="conf-ticks"><span>0.0 guess</span><span>0.5</span><span>0.8 obvious</span><span>1.0</span></div>
+        <div style="margin-top:10px">${oodTag}</div></div>
+      <div class="scope"><h3>🔎 What the model saw <small style="font-weight:600;color:var(--gray)">— scope signals from the description</small></h3>
+        <div class="scope-grid">${scopeRows}</div>
+        <div class="src">Extracted by LLM (temp 0, cached) · deterministic keyword fallback available</div></div>
+      <div class="meta-row"><span>Model <b>${d.model_version}</b></span><span>Latency <b>${d.latency_ms} ms</b></span></div>`;
+    $('resultBody').style.display = 'block';
+  }
+
+  async function loadMeta() {
+    try {
+      const m = await (await fetch('/demo/model')).json();
+      $('ver').textContent = 'model ' + m.model_version;
+      $('mcPriced').textContent = m.n_priced;
+      const card = (lab, ours, base, n) => {
+        const pass = ours < base, delta = (ours - base).toFixed(2);
+        return `<div class="card metric"><div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="lab">${lab}</div><span class="badge ${pass?'pass':'fail'}">${pass?'BEATS BASELINE':'BELOW BAR'}</span></div>
+          <div class="big">${ours}%</div>
+          <div class="vs">baseline <b>${base}%</b> · <span class="delta ${pass?'good':'bad'}">${delta} pp</span></div></div>`;
+      };
+      $('evalCards').innerHTML =
+        card(`Blended MAPE · ${m.n_priced} priced rows`, m.blended_mape, m.baseline_blended_mape) +
+        card(`Real-only MAPE · ${m.n_real} real jobs`, m.real_mape, m.baseline_real_mape);
+      $('catRows').innerHTML = (m.per_category || []).map(r => {
+        const d = (r.mape - r.baseline).toFixed(1), good = r.mape <= r.baseline;
+        return `<tr><td>${r.category}</td><td class="num">${r.n}</td><td class="num">${r.mape}%</td>
+          <td class="num">${r.baseline}%</td><td class="num" style="color:${good?'#1a8f3c':'#c0392b'}">${d>0?'+':''}${d}</td></tr>`;
+      }).join('');
+      $('evalNote').textContent = `Deterministic-scope fallback also beats both bars (blended ${m.deterministic_blended_mape}%, real ${m.deterministic_real_mape}%).`;
+      $('mcAccuracy').innerHTML = `Blended MAPE <b>${m.blended_mape}%</b> (baseline ${m.baseline_blended_mape}%) and
+        real-only <b>${m.real_mape}%</b> (baseline ${m.baseline_real_mape}%) — beats both, grouped CV.`;
+      $('prodCats').innerHTML = (m.production_verticals || []).map(c => `<span class="p prod">${c}</span>`).join('');
+      const ext = (m.trained_categories || []).filter(c => !["Plumbing","Electrical","HVAC","Handyman","Pest Control","Landscaping","Cleaning"].includes(c));
+      $('extCats').innerHTML = ext.map(c => `<span class="p ext">${c}</span>`).join('');
+    } catch (e) { $('ver').textContent = 'model offline'; }
+  }
+
+  async function loadRecent() {
+    try {
+      const data = await (await fetch('/demo/estimates')).json();
+      const rows = data.estimates || [];
+      if (!rows.length) return;
+      const dot = s => s === 'posted' ? 'dot-ok' : (s === 'skipped' ? 'dot-off' : 'dot-warn');
+      $('logRows').innerHTML = rows.map(r => `<tr><td class="mono">${r.job_id}</td><td>${r.service_category}</td>
+        <td class="num">${money(r.estimate_midpoint)}</td><td class="num">${Number(r.confidence).toFixed(2)}</td>
+        <td><span class="status-dot ${dot(r.staging_status)}"></span>${r.staging_status}</td></tr>`).join('');
+    } catch (e) {}
+  }
+
+  $('runApi').addEventListener('click', async () => {
+    $('apiOut').innerHTML = '<span class="spin"></span> calling /demo/estimates…';
+    try {
+      const body = {job_id:"api-demo", service_category:"Plumbing", zip_code:"78704",
+        job_description:"Replace 50-gallon gas water heater", original_estimate:1850, original_estimate_lo:1400, original_estimate_hi:2300};
+      const res = await fetch('/demo/estimates', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+      const d = await res.json();
+      $('apiOut').innerHTML = `<span class="tag tag-ok">200 OK · ${d.latency_ms} ms</span>
+        <pre class="code" style="margin-top:8px">{ <span class="k">"ok"</span>:true, <span class="k">"estimate_midpoint"</span>:${d.estimate_midpoint},
+  <span class="k">"confidence"</span>:${Number(d.confidence).toFixed(2)}, <span class="k">"model_version"</span>:<span class="s">"${d.model_version}"</span> }</pre>`;
+      loadRecent();
+    } catch (e) { $('apiOut').textContent = 'error: ' + e.message; }
+  });
+
+  $('getBtn').addEventListener('click', getEstimate);
+  loadMeta();
+</script>
+</body>
+</html>

@@ -16,6 +16,10 @@ class ModelServiceClient
     @base_url = base_url
   end
 
+  def self.meta
+    new.meta
+  end
+
   def predict(payload)
     response = post "/predict", payload
     raise Error, "model service responded #{response.code}" unless response.code.to_i == 200
@@ -23,7 +27,23 @@ class ModelServiceClient
     JSON.parse response.body
   end
 
+  def meta
+    response = get "/meta"
+    raise Error, "model service responded #{response.code}" unless response.code.to_i == 200
+
+    JSON.parse response.body
+  end
+
 private
+
+  def get(path)
+    uri = URI.join @base_url, path
+    http = Net::HTTP.new uri.host, uri.port
+    http.use_ssl = uri.scheme == "https"
+    http.open_timeout = TIMEOUT_SECONDS
+    http.read_timeout = TIMEOUT_SECONDS
+    http.get uri
+  end
 
   def post(path, payload)
     uri = URI.join @base_url, path

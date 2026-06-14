@@ -43,6 +43,25 @@ def cv_scores(df, config, scope_map):
     return float(np.mean(blended)), float(np.mean(real_only))
 
 
+def per_category(df, config, scope_map):
+    oof = grouped_oof(df, config, scope_map, seed=42)
+    actual, base, cats = (
+        df["final_price"].to_numpy(), df["original_estimate"].to_numpy(),
+        df["service_category"].to_numpy(),
+    )
+    rows = []
+    for category in sorted(set(cats)):
+        mask = cats == category
+        if mask.sum() < 5:
+            continue
+        rows.append({
+            "category": category, "n": int(mask.sum()),
+            "mape": round(mape(oof[mask], actual[mask]), 1),
+            "baseline": round(mape(base[mask], actual[mask]), 1),
+        })
+    return sorted(rows, key=lambda row: -row["n"])[:8]
+
+
 def main():
     df = priced(load_clean())
     config = ModelConfig(version=VERSION, use_llm_scope=True)
@@ -72,6 +91,7 @@ def main():
         "deterministic_blended_mape": round(det_blended, 2),
         "deterministic_real_mape": round(det_real, 2),
         "conformal_coverage": config.coverage,
+        "per_category": per_category(df, config, scope_map),
     }
     (MODEL_DIR / "model_meta.json").write_text(json.dumps(meta, indent=2))
     _write_report(meta)
