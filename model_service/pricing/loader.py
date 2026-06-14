@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 
 from .estimator import PricingModel, StubModel
 
-ARTIFACT_PATH = os.environ.get("PRICING_MODEL_PATH", "artifacts/model.joblib")
+_DEFAULT_ARTIFACT = Path(__file__).resolve().parents[1] / "model" / "model.joblib"
+ARTIFACT_PATH = os.environ.get("PRICING_MODEL_PATH", str(_DEFAULT_ARTIFACT))
 _log = logging.getLogger("pricing")
 
 

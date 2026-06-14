@@ -53,3 +53,23 @@ the skill keeps so the human can follow along without being interrupted.
 - `.env` scaffolded untracked: generated GAUNTLET_PRICING_SECRET; OPENAI_API_KEY placeholder for user to fill. `.env.example` committed.
 - CHECKPOINT — blocked on two user inputs: (1) dataset CSV at `data/raw/houseaccount_pricing_sample.csv`
   for model training + MAPE; (2) real OPENAI_API_KEY in `.env` for runtime LLM + deploy + demo video.
+
+## Phase 4 (cont.) — Dataset received, EDA, modeling
+- Inputs verified: CSV 1431 data rows / 11 PRD columns; OPENAI_API_KEY present (sk-, 164 chars, value never printed).
+- EDA: baseline reproduced exactly — blended MAPE 11.56% / median APE 8.33% on 411 priced rows. Confirms eval math.
+- **Open question #1 RESOLVED (non-circular):** real jobs = priced rows with globally-unique job_description =
+  **31 rows, baseline 35.9%** (~ PRD's 27 @ ~40%). Augmented rows reuse description templates (freq>=2). Real rows
+  cluster in label-starved production cats (Handyman 14 @48%, Plumbing 3, Electrical 2, Flooring 4).
+- Data quirks: deadline has 7 variants + nulls (must canonicalize to the 4); priced subset is engineered
+  (5 cats at 65-66 rows each); production verticals are label-starved (Plumbing 3 priced, Electrical 2).
+- Modeling decision: **correction model on top of original_estimate** (prior as feature + scope/zip/subtype to
+  learn residuals). Eval via **grouped CV by description template** to stop augmentation leakage.
+- Fixed a real bug: pandas `category` codes differed train vs test/serve → froze a category vocabulary
+  (learn_categories/align_categoricals) so codes align everywhere. (Numbers unchanged → categoricals low-signal.)
+- Added `is_augmented` provenance feature: model corrects unique/real rows, leaves templated rows near prior.
+  Bake-off (10 configs x 5 seeded grouped-CV): winner **verycons+weight+shrink0.7** = blended **10.86%±0.14**,
+  real **30.43%±1.11** (vs baselines 11.56 / 35.87) — beats both robustly.
+- LLM-scope ablation (98 descriptions extracted via gpt-4o-mini): LLM scope features improve real-only
+  **30.43→29.86** (lower variance), blended unchanged. Deterministic scope alone also beats both bars.
+- DECISION: ship **LLM-scope model** (verycons+weight+shrink0.7) with deterministic scope as tested fallback;
+  report both numbers. Honors the hybrid; deterministic core is the robustness guarantee.
