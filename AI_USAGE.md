@@ -42,9 +42,9 @@ The agent's own consequential calls, each grounded in the data:
 
 ## Validation steps for AI-generated code
 
-- **Three deterministic gates, enforced continuously:** `preflight.sh` (tools present),
-  `secret_guard.sh` (no key material in git or the build), and `verify.sh` (rubocop, rspec, ruff,
-  mypy, pytest across both stacks). Every commit was green.
+- **Two deterministic repo gates, enforced continuously:** `secret_guard.sh` (no key material in
+  git or the build) and `verify.sh` (rubocop, rspec, ruff, mypy, pytest across both stacks), plus a
+  one-time tool-presence preflight at the start. Every commit was green.
 - **Tests-first for the contract and the core promise.** The Appendix A endpoint was built against
   a failing request spec; the "beats both baselines" claim is itself a test
   (`test_deterministic_model_beats_both_baselines`).

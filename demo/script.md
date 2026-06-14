@@ -18,7 +18,7 @@ But a good estimate knows when it's guessing. Watch what happens with a whole-ho
 
 ### Beat 4 — Does it beat the baseline (Evaluation tab)
 
-So is it actually better than what HouseAccount has today? These are live numbers, measured by cross-validation. We're graded on two error rates. On the full set of priced jobs, we're at ten-point-nine percent error, versus the eleven-point-six baseline. And on the real jobs, the genuinely hard one-off requests, we cut the error from forty percent down to under thirty. We beat both. And the story is in this table. The biggest win is Handyman: thirty-four percent error versus forty-eight for the baseline.
+So is it actually better than what HouseAccount has today? These are live numbers, measured by cross-validation. We're graded on two error rates. On the full set of priced jobs, we're at ten-point-nine percent error, versus the eleven-point-six baseline. And on the real jobs, the genuinely hard one-off requests, we cut the error to around thirty-one percent, down from a baseline near forty. We beat both, and the real-job win is the one that matters most. The story is in this table. The biggest win is Handyman: thirty-four percent error versus forty-eight for the baseline.
 
 ### Beat 5 — The insight (stay on Evaluation)
 

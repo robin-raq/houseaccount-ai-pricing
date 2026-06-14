@@ -6,12 +6,16 @@ range, a single point estimate, and a **calibrated confidence**, in well under t
 seconds. It's built to beat HouseAccount's existing pricing baseline on the jobs that
 matter most: real, messy, one-off requests.
 
-The headline result, measured by leakage-free cross-validation:
+The headline result, measured by leakage-free cross-validation (mean over 20 seeds):
 
 | Metric | Baseline | This model | |
 |---|---|---|---|
-| Blended MAPE (411 priced jobs) | 11.6% | **10.85%** | ✅ beats |
-| Real-only MAPE (~27 real jobs) | ~40% | **29.86%** | ✅ beats |
+| Blended MAPE (411 priced jobs) | 11.56% | **10.92%** | ✅ beats |
+| Real-only MAPE (31 real jobs) | 35.87% | **31.08%** | ✅ beats |
+
+(The brief states the baselines as 11.6% and ~40%; reproduced from the raw data they are
+11.56% and 35.87%. The real-only win is the load-bearing one; the blended margin is thinner
+— see the modeling approach for the honest framing.)
 
 ## How it works
 

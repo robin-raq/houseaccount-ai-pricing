@@ -48,8 +48,10 @@ The endpoint HouseAccount calls during evaluation.
 | `400` | `{"error":"Malformed JSON"}` | body isn't valid JSON |
 | `405` | `{"error":"Method not allowed"}` | non-POST to the path |
 
-The bearer secret is enforced at request time; a missing `GAUNTLET_PRICING_SECRET` makes every
-request unauthorized (the secret compares against an empty expected value).
+The auth fails **closed**: a blank/unset `GAUNTLET_PRICING_SECRET` rejects every request (it never
+accepts an empty token), and in production the app **refuses to boot** if the secret is unset
+(`config/initializers/pricing_secret.rb`). The compare hashes both sides, so it's constant-time
+regardless of token length.
 
 ## `POST /demo/estimates` — the public playground (no bearer)
 

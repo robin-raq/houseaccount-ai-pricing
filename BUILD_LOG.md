@@ -84,3 +84,12 @@ the skill keeps so the human can follow along without being interrupted.
 - SLA: LLM client singleton + boot warmup → novel requests ~1.1–1.3s, cache hits ~30ms (< 2s target).
 - Full local integration verified: model service (:8010) + Rails (:3001). Contract 200 w/ bearer, 401 without;
   demo estimate 1315ms; live-verify (Playwright) green, 0 console errors, both eval badges BEAT BASELINE.
+
+## Phase 4 (cont.) — Adversarial review + fixes
+- Ran a 23-agent adversarial review (5 reviewers → verify each). 14 confirmed findings (3 high, 1 med, 10 low).
+- HIGH fixes: (1) canonical category mapping so kebab production slugs reach the model feature + prior (was NaN);
+  (2) auth fails CLOSED when secret blank; (3) demo endpoint hardened — job_description length cap + rack-attack throttle.
+- MED fix: boot-time initializer raises if GAUNTLET_PRICING_SECRET unset (PRD acceptance criterion that was missing).
+- LOW fixes: None-vs-0 estimate bounds, unknown-month sentinel, demo 503 on model-service error, constant-time hash
+  compare, removed dead RequestLog.clear, evaluation baseline constants, doc precision (31 real jobs, preflight wording,
+  thin-blended-margin note, broad-seed real number). Retrained; re-verified.

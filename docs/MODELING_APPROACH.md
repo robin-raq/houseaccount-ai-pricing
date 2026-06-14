@@ -72,11 +72,11 @@ splits:
 
 | Scope source | Blended MAPE | Real-only MAPE |
 |---|---|---|
-| Deterministic (regex) | 10.86% | 30.43% |
-| **LLM (shipped)** | 10.85% | **29.86%** |
+| Deterministic (regex) | 10.90% | 31.22% |
+| **LLM (shipped)** | 10.92% | **31.08%** |
 
-LLM scope improves the harder real bar consistently (and reduces its variance), with no change
-to the blended number. We ship it — but the **deterministic core alone beats both baselines**, so
+LLM scope gives a small, consistent edge on the harder real bar (and on a 5-seed sample the gap
+was larger, ~0.6pp). We ship it — but the **deterministic core alone beats both baselines**, so
 it's a tested fallback, and the graded result never hard-depends on the LLM. The LLM runs with a
 1.5s timeout; if it's slow or the key is absent, the model degrades gracefully to regex scope.
 
@@ -92,13 +92,22 @@ out-of-fold residuals. `make train` regenerates the model and `docs/TEST_RESULTS
 
 ## Results
 
+Mean over 20 CV seeds (the real-only metric has ~1–2pp seed variance on n=31):
+
 | Metric | n | Baseline | This model | Deterministic fallback |
 |---|---|---|---|---|
-| Blended MAPE | 411 | 11.56% | **10.85%** | 10.86% |
-| Real-only MAPE | 31 | 35.87% | **29.86%** | 30.43% |
+| Blended MAPE | 411 | 11.56% | **10.92%** | 10.90% |
+| Real-only MAPE | 31 | 35.87% | **31.08%** | 31.22% |
 
 The largest per-category win is **Handyman: 34.2% vs 48.4% baseline** — the label-starved,
 real-job category, which is exactly where the correction model is supposed to earn its keep.
+
+**Honest framing of the two bars.** The real-only result is the load-bearing win (~5pp, and no
+seed loses the bar). The **blended margin is thin (~0.6pp) and somewhat methodology-sensitive** —
+it shrinks toward ~0.5pp under sklearn's `GroupKFold` — because that bar is structurally dominated
+by the ~380 easy templated rows where the prior is already accurate. The blended PASS held on every
+seed and CV variant we tried, but it is a thin win, not a decisive one; the model's real value is on
+the hard jobs.
 
 ## Known limitations
 
