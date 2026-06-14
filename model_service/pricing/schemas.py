@@ -13,7 +13,7 @@ class PredictRequest(BaseModel):
     job_id: str
     service_category: str
     zip_code: str
-    job_description: str
+    job_description: str = Field(max_length=4000)
     service_subtype: str | None = None
     deadline: str | None = None
     booking_month: str | None = None

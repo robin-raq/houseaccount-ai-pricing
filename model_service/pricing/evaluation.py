@@ -16,8 +16,10 @@ from sklearn.model_selection import GroupKFold
 
 FitPredict = Callable[[pd.DataFrame, pd.DataFrame], np.ndarray]
 
-BASELINE_BLENDED = 11.6
-BASELINE_REAL = 40.0
+# The brief states blended 11.6% and real-only ~40%; reproduced from the raw data,
+# the actual baseline MAPEs are 11.56% (411 priced) and 35.87% (31 real jobs).
+BASELINE_BLENDED = 11.56
+BASELINE_REAL = 35.87
 
 
 def ape(pred: np.ndarray, actual: np.ndarray) -> np.ndarray:

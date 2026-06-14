@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from .categories import canonical_category
 from .llm_scope import extract_scope_llm
 from .model import DEFAULT_PARAMS, fit_residual_model, predict_prices, relative_band
 from .serving import TrainedModel
@@ -90,7 +91,9 @@ def build_trained_model(
 
     # OOD base = the dataset's "median observed range" (estimate_hi - estimate_lo).
     observed_range = (df_priced["estimate_hi"] - df_priced["estimate_lo"]).median()
-    category_prior = df_priced.groupby("service_category")["original_estimate"].median().to_dict()
+    # Key the imputation prior by canonical category so kebab production slugs resolve.
+    canonical = df_priced["service_category"].map(canonical_category)
+    category_prior = df_priced.groupby(canonical)["original_estimate"].median().to_dict()
     return TrainedModel(
         fitted=fitted,
         conformal_q=conformal_q,

@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 from . import data
+from .categories import canonical_category
 from .estimator import Prediction
 from .features import align_categoricals, build_features
 from .model import FittedResidualModel, interval_from, relative_band
@@ -47,9 +48,10 @@ class TrainedModel:
         imputed = request.original_estimate is None
         prior = request.original_estimate
         if prior is None:
-            prior = self.category_prior.get(request.service_category, self.global_prior)
-        lo = request.original_estimate_lo or prior * 0.8
-        hi = request.original_estimate_hi or prior * 1.2
+            canonical = canonical_category(request.service_category)
+            prior = self.category_prior.get(canonical, self.global_prior)
+        lo = prior * 0.8 if request.original_estimate_lo is None else request.original_estimate_lo
+        hi = prior * 1.2 if request.original_estimate_hi is None else request.original_estimate_hi
         raw = pd.DataFrame(
             [
                 {

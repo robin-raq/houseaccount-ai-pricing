@@ -5,6 +5,7 @@ import pytest
 from pricing.categories import (
     PRODUCTION_VERTICALS,
     TRAINED_CATEGORIES,
+    canonical_category,
     is_production,
     normalize_category,
 )
@@ -44,3 +45,15 @@ def test_blank_category_is_not_production():
 def test_normalize_kebabs_and_lowercases():
     assert normalize_category("Pest Control") == "pest-control"
     assert normalize_category("General_Contractor") == "general-contractor"
+
+
+def test_canonical_maps_both_schemes_to_one_vocabulary():
+    # Title-case and its kebab slug land on the same canonical token.
+    assert canonical_category("Cleaning") == "cleaning"
+    assert canonical_category("indoor-cleaning") == "cleaning"
+    assert canonical_category("exterior-cleaning") == "cleaning"
+    assert canonical_category("Landscaping") == "landscaping"
+    assert canonical_category("landscaping-lawn") == "landscaping"
+    assert canonical_category("Pest Control") == "pest-control"
+    assert canonical_category("tick-mosquito-treatment") == "pest-control"
+    assert canonical_category("plumbing") == "plumbing"

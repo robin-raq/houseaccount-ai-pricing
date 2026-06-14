@@ -4,10 +4,10 @@
   "n_real": 31,
   "baseline_blended_mape": 11.56,
   "baseline_real_mape": 35.87,
-  "blended_mape": 10.85,
-  "real_mape": 29.86,
-  "deterministic_blended_mape": 10.86,
-  "deterministic_real_mape": 30.43,
+  "blended_mape": 10.92,
+  "real_mape": 31.08,
+  "deterministic_blended_mape": 10.9,
+  "deterministic_real_mape": 31.22,
   "conformal_coverage": 0.8,
   "per_category": [
     {

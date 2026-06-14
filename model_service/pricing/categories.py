@@ -35,11 +35,31 @@ _PRODUCTION_KEYS: frozenset[str] = PRODUCTION_VERTICALS | frozenset(
 )
 
 
+# Production kebab slugs that collapse onto a different dataset category than their
+# own normalized form (several production verticals fold into one dataset category).
+_SLUG_TO_CATEGORY: dict[str, str] = {
+    "indoor-cleaning": "cleaning",
+    "exterior-cleaning": "cleaning",
+    "landscaping-lawn": "landscaping",
+    "irrigation": "landscaping",
+    "tick-mosquito-treatment": "pest-control",
+}
+
+
 def normalize_category(raw: str | None) -> str:
     """Lower-case, trim, and kebab-ify a category from either naming scheme."""
     if not raw:
         return ""
     return "-".join(raw.strip().lower().replace("_", " ").replace("-", " ").split())
+
+
+def canonical_category(raw: str | None) -> str:
+    """Map any category — title-case dataset name or kebab production slug — onto the
+    single normalized vocabulary the model is trained on, so the feature, the prior
+    lookup, and the OOD check all agree.
+    """
+    normalized = normalize_category(raw)
+    return _SLUG_TO_CATEGORY.get(normalized, normalized)
 
 
 def is_production(raw: str | None) -> bool:

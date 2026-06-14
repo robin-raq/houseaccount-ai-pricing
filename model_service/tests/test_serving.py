@@ -45,6 +45,21 @@ def test_non_production_category_is_low_confidence_but_not_rejected():
     assert response.estimate_midpoint > 0  # passed through, not rejected
 
 
+def test_kebab_case_production_category_is_recognized():
+    # Production requests may use kebab slugs ("indoor-cleaning"); the canonical
+    # mapping must route them into the model vocabulary, not drop the category signal.
+    response = estimate(
+        _request(
+            service_category="indoor-cleaning", service_subtype="House cleaning",
+            original_estimate=200.0, original_estimate_lo=160.0, original_estimate_hi=240.0,
+            job_description="Standard 3 bedroom house deep clean",
+        ),
+        load_model(), use_llm=False,
+    )
+    assert "category_outside_production_set" not in response.ood_reasons
+    assert response.estimate_lo <= response.estimate_midpoint <= response.estimate_hi
+
+
 def test_missing_prior_is_imputed_and_still_priced():
     response = estimate(
         _request(service_category="Cleaning", original_estimate=None,

@@ -10,6 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from .categories import canonical_category
 from .scope import extract_scope_fallback
 
 CATEGORICAL = ["service_category", "service_subtype", "zip3", "deadline_bucket"]
@@ -64,8 +65,11 @@ def build_features(
     out["rel_band"] = (df["estimate_hi"] - df["estimate_lo"]) / prior
 
     out["urgency"] = df["urgency"].astype(float)
-    out["month_sin"] = np.sin(2 * np.pi * df["month"] / 12.0)
-    out["month_cos"] = np.cos(2 * np.pi * df["month"] / 12.0)
+    # Unknown month (0) is a distinct missing value, not a real point on the circle —
+    # leave it NaN (LightGBM handles missing) so it never collides with a trained month.
+    known_month = df["month"] > 0
+    out["month_sin"] = np.where(known_month, np.sin(2 * np.pi * df["month"] / 12.0), np.nan)
+    out["month_cos"] = np.where(known_month, np.cos(2 * np.pi * df["month"] / 12.0), np.nan)
     out["desc_len"] = df["job_description"].str.len().astype(float)
     out["desc_words"] = df["job_description"].str.split().map(len).astype(float)
     # Provenance: a repeated description is an augmented template (model should not
@@ -78,9 +82,11 @@ def build_features(
     ).apply(pd.Series)
     out = out.join(scope)
 
-    # Categoricals stay as plain strings here; a stable vocabulary is applied later
-    # (see align_categoricals) so train/test/serve share the same category codes.
-    for column in CATEGORICAL:
+    # service_category is canonicalized so title-case dataset names and kebab
+    # production slugs share one vocabulary; the rest stay as raw strings. A stable
+    # vocabulary is frozen later (align_categoricals) so codes match across train/serve.
+    out["service_category"] = df["service_category"].map(canonical_category).astype(object)
+    for column in ("service_subtype", "zip3", "deadline_bucket"):
         out[column] = df[column].astype("string").astype(object)
     return out
 

@@ -31,7 +31,9 @@ from pricing.training import (  # noqa: E402
 )
 
 VERSION = "houseaccount-pricing-v1.0.0"
-SEEDS = [1, 7, 13, 21, 42]
+# A broad seed set so the reported CV means reflect the expected reproducible value,
+# not the favorable end of a small sample (the real-only metric has ~1-2pp seed variance).
+SEEDS = list(range(1, 21))
 
 
 def cv_scores(df, config, scope_map):
