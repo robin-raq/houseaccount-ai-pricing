@@ -4,10 +4,11 @@ class PricingEstimatesController < ApplicationController
   include Priceable
 
   before_action :authenticate_bearer!
+  rescue_from ModelServiceClient::Error, with: :upstream_unavailable
 
   def create
-    missing = blank_required_field
-    return render_error "#{missing} required", :bad_request if missing
+    error = booking_error
+    return render_error error, :bad_request if error
 
     estimate = ModelServiceClient.predict booking_payload
     render json: success_body(estimate)

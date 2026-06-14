@@ -25,6 +25,9 @@ gem "thruster", require: false
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 # gem "rack-cors"
 
+# Per-IP rate limiting for the unauthenticated demo endpoint.
+gem "rack-attack"
+
 # Load ENV from .env in development/test; production uses the platform secret store.
 gem "dotenv-rails", groups: %i[ development test ]
 

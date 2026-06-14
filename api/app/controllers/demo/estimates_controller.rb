@@ -4,9 +4,11 @@ module Demo
   class EstimatesController < ApplicationController
     include Priceable
 
+    rescue_from ModelServiceClient::Error, with: :upstream_unavailable
+
     def create
-      missing = blank_required_field
-      return render_error "#{missing} required", :bad_request if missing
+      error = booking_error
+      return render_error error, :bad_request if error
 
       payload = booking_payload
       estimate = ModelServiceClient.predict payload

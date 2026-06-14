@@ -15,9 +15,5 @@ class RequestLog
     def recent
       @entries
     end
-
-    def clear
-      @entries = []
-    end
   end
 end

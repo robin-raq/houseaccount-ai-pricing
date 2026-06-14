@@ -62,6 +62,24 @@ RSpec.describe "POST /pricing-estimate", type: :request do
     expect(response.parsed_body).to eq("error" => "job_description required")
   end
 
+  it "fails closed when the secret is unset (empty token does not authenticate)" do
+    ENV["GAUNTLET_PRICING_SECRET"] = ""
+    post "/pricing-estimate", params: valid_body.to_json,
+                              headers: { "Authorization" => "Bearer ", "Content-Type" => "application/json" }
+
+    expect(response).to have_http_status :unauthorized
+  ensure
+    ENV["GAUNTLET_PRICING_SECRET"] = secret
+  end
+
+  it "rejects an over-long job_description" do
+    post "/pricing-estimate", params: valid_body.merge(job_description: "x" * 5000).to_json,
+                              headers: auth_headers
+
+    expect(response).to have_http_status :bad_request
+    expect(response.parsed_body).to eq("error" => "job_description too long")
+  end
+
   it "rejects malformed JSON" do
     post "/pricing-estimate", params: "{ not valid json", headers: auth_headers
 
