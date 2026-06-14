@@ -45,3 +45,11 @@ the skill keeps so the human can follow along without being interrupted.
 - Stack layout: `api/` (Rails 8 API-only, Appendix-A contract) + `model_service/` (Python FastAPI: features→model→intervals→confidence).
 - BLOCKER for the *model*: need `data/raw/houseaccount_pricing_sample.csv`. BLOCKER for *runtime LLM + deploy + video*: need `OPENAI_API_KEY`.
 - Proceeding with data-independent scaffold (Rails contract + gates + Python skeleton w/ stub estimator) while awaiting inputs.
+- Rails 8 API-only (no DB; estimates are pure request/response). Python via uv, FastAPI model service.
+- Python core DONE+green: categories, confidence/OOD, scope (fallback + optional LLM), schemas, estimator (stub behind PricingModel protocol), FastAPI /predict + /health. 35 tests, ruff+mypy clean.
+- Rails contract DONE+green: bearer auth (secure_compare), required-field 400s, malformed-JSON 400, 405, wrapped 200; ModelServiceClient. 6 request specs; rubocop pinned to STYLE.md (100-char, outdented private).
+- `scripts/verify.sh` (both stacks) GREEN; `secret_guard.sh` clean. Restored `api/.gitignore` (rails --skip-git omitted it) so master.key stays untracked.
+- 4 local commits (scaffold/meta, model service, api contract, tooling). NOT pushed (awaiting go-ahead).
+- `.env` scaffolded untracked: generated GAUNTLET_PRICING_SECRET; OPENAI_API_KEY placeholder for user to fill. `.env.example` committed.
+- CHECKPOINT — blocked on two user inputs: (1) dataset CSV at `data/raw/houseaccount_pricing_sample.csv`
+  for model training + MAPE; (2) real OPENAI_API_KEY in `.env` for runtime LLM + deploy + demo video.
