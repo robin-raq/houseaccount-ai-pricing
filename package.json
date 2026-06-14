@@ -1,0 +1,14 @@
+{
+  "name": "houseaccount-pricing-tooling",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev tooling (Playwright) for style capture, mockup verification, live-verify, and demo recording. Not part of the deployed app.",
+  "type": "module",
+  "scripts": {
+    "verify:mockup": "node scripts/verify_mockup.mjs",
+    "capture:style": "node scripts/capture_style.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.60"
+  }
+}
