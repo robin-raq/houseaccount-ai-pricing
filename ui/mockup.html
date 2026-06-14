@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HouseAccount · AI Pricing Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* ---- HouseAccount design tokens (measured from houseaccount.com) ---- */
+  :root {
+    --navy: #143c55;          /* brand dark blue — headings, dark sections, primary btn */
+    --navy-deep: #0e2c40;
+    --blue: #2d62ff;          /* brand blue — accent, links, focus */
+    --blue-133: #133c55;
+    --amber: #ffb959;         /* hero CTA */
+    --orange: #ff7e28;
+    --pink: #dd23bb;          /* tertiary, sparing */
+    --light-blue: #def2ff;
+    --blue-wash: #d9e5ff;
+    --white: #ffffff;
+    --ink: #0b1a25;
+    --gray: #6e777d;          /* secondary text */
+    --neutral-darker: #222;
+    --line: #e7ebee;          /* hairline borders (lighter than #eee for warmth) */
+    --bg: #f6f8fa;            /* app canvas */
+    --success-bg: #cef5ca; --success-fg: #114e0b;
+    --warn-bg: #fcf8d8;       --warn-fg: #5e5515;
+    --error-bg: #f8e4e4;      --error-fg: #3b0b0b;
+    --radius-card: 8px;
+    --radius-pill: 100px;
+    --shadow-sm: rgba(39,56,66,0.08) 0 10px 16px 0;
+    --shadow-md: rgba(20,60,85,0.10) 0 10px 30px 0;
+    --font: 'Mulish', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 { color: var(--navy); font-weight: 800; line-height: 1.15; margin: 0 0 .4em; }
+  h1 { font-size: 30px; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; }
+  h3 { font-size: 16px; font-weight: 700; }
+  p { margin: 0 0 1em; color: var(--neutral-darker); }
+  a { color: var(--blue); text-decoration: none; }
+  small { color: var(--gray); }
+  code, pre, .mono { font-family: 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, monospace; }
+
+  /* ---- Top nav ---- */
+  .topbar {
+    background: var(--navy);
+    color: var(--white);
+    position: sticky; top: 0; z-index: 20;
+    box-shadow: var(--shadow-sm);
+  }
+  .topbar-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; gap: 28px; height: 64px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: #fff; }
+  .brand .glyph { width: 26px; height: 26px; flex: 0 0 26px; }
+  .nav { display: flex; gap: 4px; margin-left: 8px; }
+  .nav button {
+    background: transparent; border: 0; color: rgba(255,255,255,0.72);
+    font-family: var(--font); font-size: 15px; font-weight: 600;
+    padding: 8px 14px; border-radius: var(--radius-pill); cursor: pointer; transition: .15s;
+  }
+  .nav button:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .nav button.active { color: var(--navy); background: var(--amber); }
+  .topbar .spacer { flex: 1; }
+  .ver-pill {
+    font-size: 12px; font-weight: 700; color: var(--light-blue);
+    border: 1px solid rgba(255,255,255,0.22); border-radius: var(--radius-pill);
+    padding: 5px 12px; white-space: nowrap;
+  }
+  .ver-pill .dot { color: #69f0ae; }
+
+  /* ---- Layout ---- */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
+  .screen { display: none; animation: fade .25s ease; }
+  .screen.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px);} to {opacity:1; transform:none;} }
+  .page-head { margin-bottom: 22px; }
+  .page-head .eyebrow { color: var(--blue); font-weight: 700; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+  .page-head p { max-width: 720px; color: var(--gray); }
+
+  .card {
+    background: var(--white); border: 1px solid var(--line);
+    border-radius: var(--radius-card); box-shadow: var(--shadow-sm);
+  }
+  .card.pad { padding: 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+  @media (max-width: 900px){ .grid-2,.grid-3 { grid-template-columns: 1fr; } }
+
+  /* ---- Buttons ---- */
+  .btn {
+    font-family: var(--font); font-weight: 700; font-size: 15px; cursor: pointer;
+    border-radius: var(--radius-pill); padding: 11px 22px; border: 2px solid transparent; transition: .15s;
+  }
+  .btn-primary { background: var(--navy); color: #fff; }
+  .btn-primary:hover { background: var(--navy-deep); }
+  .btn-amber { background: var(--amber); color: var(--navy); }
+  .btn-amber:hover { filter: brightness(0.97); }
+  .btn-ghost { background: #fff; color: var(--navy); border-color: var(--line); }
+  .btn-ghost:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* ---- Forms ---- */
+  label.field { display: block; margin-bottom: 14px; }
+  label.field > span { display: block; font-weight: 700; font-size: 13px; color: var(--navy); margin-bottom: 6px; }
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; font-family: var(--font); font-size: 15px; color: var(--ink);
+    padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-card);
+    background: #fcfdfe; transition: .15s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(45,98,255,0.12); }
+  textarea { resize: vertical; min-height: 88px; line-height: 1.45; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .chip {
+    font-size: 12.5px; font-weight: 600; color: var(--navy);
+    background: var(--light-blue); border: 1px solid transparent; border-radius: var(--radius-pill);
+    padding: 6px 12px; cursor: pointer; transition: .15s;
+  }
+  .chip:hover { border-color: var(--blue); }
+  details.adv { margin: 4px 0 16px; }
+  details.adv summary { cursor: pointer; font-weight: 700; font-size: 13px; color: var(--blue); }
+
+  /* ---- Estimate result ---- */
+  .result-empty { color: var(--gray); text-align: center; padding: 48px 16px; }
+  .result-empty svg { opacity: .5; margin-bottom: 12px; }
+  .price-big { font-size: 40px; font-weight: 800; color: var(--navy); letter-spacing: -0.02em; }
+  .price-big small { font-size: 16px; color: var(--gray); font-weight: 600; }
+  .midline { color: var(--gray); font-weight: 600; margin-top: 2px; }
+  .rangebar { position: relative; height: 12px; background: var(--blue-wash); border-radius: var(--radius-pill); margin: 22px 0 6px; }
+  .rangebar .fill { position: absolute; height: 100%; background: linear-gradient(90deg, #6f8dff, var(--blue)); border-radius: var(--radius-pill); }
+  .rangebar .mid { position: absolute; top: -5px; width: 3px; height: 22px; background: var(--navy); border-radius: 2px; }
+  .range-legend { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray); font-weight: 600; }
+
+  .conf { margin-top: 22px; }
+  .conf-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .conf-val { font-size: 26px; font-weight: 800; color: var(--navy); }
+  .conf-band { position: relative; height: 10px; border-radius: var(--radius-pill); margin: 12px 0 6px;
+    background: linear-gradient(90deg, #f3a3a3 0 33%, #ffd98a 33% 60%, #9bd99a 60% 100%); }
+  .conf-band .needle { position: absolute; top: -4px; width: 4px; height: 18px; background: var(--navy); border-radius: 2px; transform: translateX(-50%); }
+  .conf-ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray); font-weight: 600; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; border-radius: var(--radius-pill); padding: 4px 11px; }
+  .tag-ok { background: var(--success-bg); color: var(--success-fg); }
+  .tag-warn { background: var(--warn-bg); color: var(--warn-fg); }
+  .tag-info { background: var(--light-blue); color: var(--navy); }
+
+  .scope { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px; }
+  .scope h3 { display: flex; align-items: center; gap: 7px; }
+  .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; margin-top: 8px; }
+  .scope-grid div { font-size: 13.5px; }
+  .scope-grid b { color: var(--navy); }
+  .scope .src { font-size: 11.5px; color: var(--gray); margin-top: 10px; }
+  .meta-row { display: flex; gap: 16px; margin-top: 16px; font-size: 12.5px; color: var(--gray); flex-wrap: wrap; }
+  .meta-row b { color: var(--navy); }
+
+  /* ---- Metric cards (eval) ---- */
+  .metric { padding: 22px; }
+  .metric .lab { font-size: 13px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .03em; }
+  .metric .big { font-size: 38px; font-weight: 800; color: var(--navy); margin: 6px 0 2px; }
+  .metric .vs { font-size: 13px; color: var(--gray); }
+  .metric .delta { font-weight: 800; }
+  .delta.good { color: #1a8f3c; } .delta.bad { color: #c0392b; }
+  .badge { font-size: 12px; font-weight: 800; border-radius: var(--radius-pill); padding: 4px 12px; }
+  .badge.pass { background: var(--success-bg); color: var(--success-fg); }
+  .badge.fail { background: var(--error-bg); color: var(--error-fg); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--gray); font-weight: 700; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: 0; }
+
+  .hist { display: flex; align-items: flex-end; gap: 6px; height: 120px; padding-top: 8px; }
+  .hist .bar { flex: 1; background: linear-gradient(180deg, var(--blue), #6f8dff); border-radius: 4px 4px 0 0; }
+  .hist-x { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray); margin-top: 6px; }
+
+  /* ---- Model card ---- */
+  .mc-section { margin-bottom: 18px; }
+  .mc-section h3 { color: var(--blue); text-transform: uppercase; letter-spacing: .03em; font-size: 12.5px; }
+  ul.clean { margin: 0; padding-left: 18px; } ul.clean li { margin-bottom: 6px; font-size: 14.5px; }
+  .pill-list { display: flex; flex-wrap: wrap; gap: 7px; }
+  .pill-list .p { font-size: 12.5px; font-weight: 600; border-radius: var(--radius-pill); padding: 5px 12px; }
+  .p.prod { background: var(--success-bg); color: var(--success-fg); }
+  .p.ext { background: var(--warn-bg); color: var(--warn-fg); }
+
+  /* ---- API ---- */
+  pre.code { background: var(--navy-deep); color: #dbe7f5; border-radius: var(--radius-card); padding: 16px 18px; overflow:auto; font-size: 13px; line-height: 1.55; }
+  pre.code .k { color: #ffd98a; } pre.code .s { color: #9bd99a; } pre.code .c { color: #7d93a8; }
+  .method { font-weight: 800; color: #fff; background: var(--blue); border-radius: 5px; padding: 2px 9px; font-size: 12px; }
+  .endpoint { font-size: 15px; }
+  .status-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-ok { background: #1a8f3c; } .dot-warn { background: var(--amber); }
+  .foot { text-align: center; color: var(--gray); font-size: 13px; padding: 26px 0 8px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg class="glyph" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M16 3 4 13v15a1 1 0 0 0 1 1h7v-9h8v9h7a1 1 0 0 0 1-1V13L16 3Z" fill="#ffb959"/>
+        <path d="M16 3 4 13h24L16 3Z" fill="#fff"/>
+      </svg>
+      HouseAccount
+    </div>
+    <nav class="nav" id="nav">
+      <button data-screen="estimate" class="active">Estimate</button>
+      <button data-screen="evaluate">Evaluation</button>
+      <button data-screen="model">Model Card</button>
+      <button data-screen="api">API &amp; Integration</button>
+    </nav>
+    <div class="spacer"></div>
+    <span class="ver-pill"><span class="dot">●</span> model houseaccount-pricing-v1.0.0</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ SCREEN 1: ESTIMATE ============ -->
+  <section class="screen active" id="estimate">
+    <div class="page-head">
+      <div class="eyebrow">Booking-time estimate</div>
+      <h1>Price a job the moment it's booked</h1>
+      <p>Enter a homeowner's request exactly as it arrives. The engine returns a transparent
+         price range, a calibrated confidence, and the scope signals it read from the description.</p>
+    </div>
+
+    <div class="grid-2">
+      <!-- form -->
+      <div class="card pad">
+        <div class="chips">
+          <span class="chip" data-example="water-heater">💧 Water heater replacement</span>
+          <span class="chip" data-example="bed-bugs">🐞 Bed bug treatment</span>
+          <span class="chip" data-example="windows">🪟 Window washing</span>
+          <span class="chip" data-example="ood">⚠️ Whole-home remodel</span>
+        </div>
+        <label class="field"><span>Service category</span>
+          <select id="f-cat">
+            <option>Plumbing</option><option>Pest Control</option><option>Cleaning</option>
+            <option>Painting</option><option>Electrical</option><option>HVAC</option>
+            <option>Landscaping</option><option>Handyman</option><option>Roofing</option>
+            <option>Flooring</option><option>Appliance Repair</option><option>Exterior</option>
+            <option>Chimney</option><option>Pool</option><option>Moving</option><option>Auto</option>
+            <option>General Contractor</option><option>Remodeling</option>
+          </select>
+        </label>
+        <div class="row-2">
+          <label class="field"><span>Service subtype</span>
+            <input type="text" id="f-sub" value="Water Heater Replacement" /></label>
+          <label class="field"><span>ZIP code</span>
+            <input type="text" id="f-zip" value="78704" maxlength="5" /></label>
+        </div>
+        <label class="field"><span>Job description</span>
+          <textarea id="f-desc">50-gallon gas water heater stopped working last night, pilot light won't stay lit. Need replacement.</textarea>
+        </label>
+        <div class="row-2">
+          <label class="field"><span>Deadline</span>
+            <select id="f-deadline">
+              <option>As soon as possible</option><option selected>Within 1-2 weeks</option>
+              <option>Within 1 month</option><option>I'm flexible</option>
+            </select></label>
+          <label class="field"><span>Booking month</span>
+            <input type="text" id="f-month" value="2026-05" /></label>
+        </div>
+        <details class="adv">
+          <summary>I have a previous estimate (optional)</summary>
+          <div class="row-2" style="margin-top:10px">
+            <label class="field"><span>Original low</span><input type="number" id="f-olo" value="1400" /></label>
+            <label class="field"><span>Original high</span><input type="number" id="f-ohi" value="2300" /></label>
+          </div>
+        </details>
+        <button class="btn btn-amber" id="getEstimate" style="width:100%">Get estimate</button>
+      </div>
+
+      <!-- result -->
+      <div class="card pad" id="resultCard">
+        <div id="resultBody">
+          <div class="conf-head" style="margin-bottom:2px">
+            <div><div class="price-big" id="r-range">$1,450 – $2,200</div>
+              <div class="midline">Point estimate <b id="r-mid" style="color:var(--navy)">$1,825</b></div></div>
+            <span class="tag tag-info" id="r-cat-tag">Plumbing · in production</span>
+          </div>
+          <div class="rangebar"><div class="fill" id="r-fill" style="left:18%;right:14%"></div>
+            <div class="mid" id="r-midmark" style="left:50%"></div></div>
+          <div class="range-legend"><span>$0</span><span>typical band</span><span>$3,000</span></div>
+
+          <div class="conf">
+            <div class="conf-head"><h3 style="margin:0">Confidence</h3>
+              <span class="conf-val" id="r-conf">0.78</span></div>
+            <div class="conf-band"><div class="needle" id="r-needle" style="left:78%"></div></div>
+            <div class="conf-ticks"><span>0.0 guess</span><span>0.5</span><span>0.8 obvious</span><span>1.0</span></div>
+            <div style="margin-top:10px" id="r-ood"><span class="tag tag-ok">✓ In-distribution — all calibration checks passed</span></div>
+          </div>
+
+          <div class="scope">
+            <h3>🔎 What the model saw <small style="font-weight:600;color:var(--gray)">— scope signals from the description</small></h3>
+            <div class="scope-grid" id="r-scope">
+              <div><b>Appliance:</b> 50-gal gas water heater</div>
+              <div><b>Failure:</b> pilot won't stay lit</div>
+              <div><b>Complexity:</b> medium</div>
+              <div><b>Est. labor:</b> 3–4 hrs</div>
+              <div><b>Material tier:</b> standard</div>
+              <div><b>Customer supplies parts:</b> no</div>
+            </div>
+            <div class="src">Extracted by LLM (temp 0, cached) · deterministic keyword fallback available</div>
+          </div>
+
+          <div class="meta-row">
+            <span>Model <b>houseaccount-pricing-v1.0.0</b></span>
+            <span>Latency <b id="r-latency">740 ms</b></span>
+            <span>Baseline midpoint <b>$1,850</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 2: EVALUATION ============ -->
+  <section class="screen" id="evaluate">
+    <div class="page-head">
+      <div class="eyebrow">Accuracy vs. baseline</div>
+      <h1>Does it beat the current model?</h1>
+      <p>Both MAPE numbers are computed from submitted predictions on the held-out priced rows.
+         The bar is the existing AI-estimate baseline. We must beat it on both subsets.</p>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:22px">
+      <div class="card metric">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="lab">Blended MAPE · 411 priced rows</div><span class="badge pass">BEATS BASELINE</span></div>
+        <div class="big">9.2%</div>
+        <div class="vs">baseline <b>11.6%</b> &nbsp;·&nbsp; <span class="delta good">−2.4 pp</span> &nbsp;·&nbsp; median APE 6.9%</div>
+      </div>
+      <div class="card metric">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="lab">Real-only MAPE · 27 real jobs</div><span class="badge pass">BEATS BASELINE</span></div>
+        <div class="big">31.5%</div>
+        <div class="vs">baseline <b>~40%</b> &nbsp;·&nbsp; <span class="delta good">−8.5 pp</span> &nbsp;·&nbsp; held-out real subset</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card pad">
+        <h2>MAPE by service category</h2>
+        <table>
+          <thead><tr><th>Category</th><th class="num">n</th><th class="num">Our MAPE</th><th class="num">Baseline</th><th class="num">Δ</th></tr></thead>
+          <tbody>
+            <tr><td>Plumbing</td><td class="num">71</td><td class="num">7.8%</td><td class="num">10.4%</td><td class="num" style="color:#1a8f3c">−2.6</td></tr>
+            <tr><td>Cleaning</td><td class="num">64</td><td class="num">8.1%</td><td class="num">9.9%</td><td class="num" style="color:#1a8f3c">−1.8</td></tr>
+            <tr><td>Pest Control</td><td class="num">38</td><td class="num">11.2%</td><td class="num">14.1%</td><td class="num" style="color:#1a8f3c">−2.9</td></tr>
+            <tr><td>Painting</td><td class="num">42</td><td class="num">10.5%</td><td class="num">12.0%</td><td class="num" style="color:#1a8f3c">−1.5</td></tr>
+            <tr><td>HVAC</td><td class="num">29</td><td class="num">12.9%</td><td class="num">13.3%</td><td class="num" style="color:#1a8f3c">−0.4</td></tr>
+            <tr><td>Electrical</td><td class="num">34</td><td class="num">9.0%</td><td class="num">11.1%</td><td class="num" style="color:#1a8f3c">−2.1</td></tr>
+            <tr><td>Landscaping</td><td class="num">31</td><td class="num">10.8%</td><td class="num">12.6%</td><td class="num" style="color:#1a8f3c">−1.8</td></tr>
+          </tbody>
+        </table>
+        <small>Per-category numbers are illustrative until the Phase-4 eval runs on the real dataset.</small>
+      </div>
+      <div class="card pad">
+        <h2>Absolute % error distribution</h2>
+        <div class="hist">
+          <div class="bar" style="height:30%"></div><div class="bar" style="height:62%"></div>
+          <div class="bar" style="height:95%"></div><div class="bar" style="height:78%"></div>
+          <div class="bar" style="height:50%"></div><div class="bar" style="height:34%"></div>
+          <div class="bar" style="height:22%"></div><div class="bar" style="height:14%"></div>
+          <div class="bar" style="height:9%"></div><div class="bar" style="height:6%"></div>
+        </div>
+        <div class="hist-x"><span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%+</span></div>
+        <p style="margin-top:18px;font-size:14px">Most jobs land under 10% absolute error. The long tail is
+           dominated by sparse categories and large jobs, which the engine flags with low confidence
+           rather than pricing overconfidently.</p>
+        <div class="meta-row"><span>Last evaluated <b>2026-06-14</b></span><span>n = <b>411</b> priced / <b>27</b> real</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 3: MODEL CARD ============ -->
+  <section class="screen" id="model">
+    <div class="page-head">
+      <div class="eyebrow">Documented modeling approach</div>
+      <h1>How the estimate is made</h1>
+      <p>A transparent model card: the data, the features, the model, and — most importantly —
+         how confidence is computed and when the engine admits it's guessing.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card pad">
+        <div class="mc-section"><h3>Data used</h3>
+          <ul class="clean">
+            <li>1,432 sanitized historical jobs across 18 service categories</li>
+            <li>411 rows carry a <b>final_price</b> — the supervised training/eval signal</li>
+            <li>1,033 unique real ZIP codes, joined to median household income (Census)</li>
+            <li>PII stripped; dates truncated to YYYY-MM; 13 jobs &gt; $10K dropped as outliers</li>
+          </ul></div>
+        <div class="mc-section"><h3>Features</h3>
+          <ul class="clean">
+            <li>Category &amp; subtype (normalized title-case ↔ kebab-case)</li>
+            <li>ZIP → region + median household income (demographic signal, not a price table)</li>
+            <li>Booking month → seasonality; deadline → urgency</li>
+            <li><b>LLM scope signals</b> from the description: size, fixture count, complexity,
+                material tier, est. labor hours, who-supplies-parts</li>
+          </ul></div>
+        <div class="mc-section"><h3>Model</h3>
+          <ul class="clean">
+            <li>Gradient-boosted regressor on log-price (robust to the skewed price distribution)</li>
+            <li>Conformal prediction for the <b>lo / hi</b> interval — calibrated, distribution-free</li>
+            <li>Deterministic core: same input → same estimate, every time</li>
+          </ul></div>
+      </div>
+
+      <div class="card pad">
+        <div class="mc-section"><h3>How confidence is calculated</h3>
+          <p style="font-size:14.5px">Base confidence comes from the <b>conformal interval width</b> relative to the
+             point estimate — a tight band means the model is sure, a wide band means it isn't.
+             It's mapped monotonically into [0, 1] and clamped.</p></div>
+        <div class="mc-section"><h3>Out-of-distribution → forced &lt; 0.5</h3>
+          <p style="font-size:14.5px">These never get rejected or capped — they pass through, flagged, so the
+             marketplace can route them:</p>
+          <ul class="clean">
+            <li>Estimate midpoint <b>&gt; $5,000</b> (≈95th percentile of training)</li>
+            <li>Interval wider than <b>3× the median</b> observed range</li>
+            <li>Category outside the <b>10 current production verticals</b></li>
+          </ul></div>
+        <div class="mc-section"><h3>Category coverage</h3>
+          <p style="font-size:13.5px;margin-bottom:8px"><b>Full-confidence (production):</b></p>
+          <div class="pill-list" style="margin-bottom:12px">
+            <span class="p prod">electrical</span><span class="p prod">exterior-cleaning</span>
+            <span class="p prod">handyman</span><span class="p prod">hvac</span>
+            <span class="p prod">indoor-cleaning</span><span class="p prod">irrigation</span>
+            <span class="p prod">landscaping-lawn</span><span class="p prod">pest-control</span>
+            <span class="p prod">plumbing</span><span class="p prod">tick-mosquito-treatment</span>
+          </div>
+          <p style="font-size:13.5px;margin-bottom:8px"><b>Trained but reduced-confidence (expansion):</b></p>
+          <div class="pill-list">
+            <span class="p ext">Roofing</span><span class="p ext">Flooring</span><span class="p ext">Pool</span>
+            <span class="p ext">Chimney</span><span class="p ext">Moving</span><span class="p ext">Auto</span>
+            <span class="p ext">Remodeling</span><span class="p ext">General Contractor</span>
+          </div></div>
+        <div class="mc-section"><h3>Known limitations</h3>
+          <ul class="clean">
+            <li>No square-footage / fixture fields in source — scope is inferred from text</li>
+            <li>Sparse categories were augmented; real-job confidence is lower there</li>
+            <li>Month-level dates only — no day-of-week or precise seasonality</li>
+          </ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 4: API & INTEGRATION ============ -->
+  <section class="screen" id="api">
+    <div class="page-head">
+      <div class="eyebrow">The contract</div>
+      <h1>API &amp; booking-flow integration</h1>
+      <p>The Rails service implements the Appendix A contract: bearer auth, structured booking in,
+         structured estimate out, and an outbound post into the HouseAccount booking flow.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card pad">
+        <h2>Endpoint</h2>
+        <p class="endpoint"><span class="method">POST</span> &nbsp;<code>/pricing-estimate</code></p>
+        <p style="font-size:13.5px;color:var(--gray)">Header <code>Authorization: Bearer &lt;secret&gt;</code> ·
+           constant-time compared · content-type <code>application/json</code>.</p>
+        <h3 style="margin-top:14px">Request</h3>
+        <pre class="code"><span class="c">// required: job_id, service_category, zip_code, job_description</span>
+{
+  <span class="k">"job_id"</span>: <span class="s">"abc123"</span>,
+  <span class="k">"service_category"</span>: <span class="s">"Plumbing"</span>,
+  <span class="k">"service_subtype"</span>: <span class="s">"Water Heater Replacement"</span>,
+  <span class="k">"zip_code"</span>: <span class="s">"78704"</span>,
+  <span class="k">"job_description"</span>: <span class="s">"50-gal gas water heater, pilot won't stay lit."</span>,
+  <span class="k">"deadline"</span>: <span class="s">"Within 1-2 weeks"</span>,
+  <span class="k">"booking_month"</span>: <span class="s">"2026-05"</span>
+}</pre>
+        <h3 style="margin-top:14px">Response · 200</h3>
+        <pre class="code">{
+  <span class="k">"ok"</span>: <span class="s">true</span>,
+  <span class="k">"job_id"</span>: <span class="s">"abc123"</span>,
+  <span class="k">"estimate_lo"</span>: <span class="s">1450</span>,
+  <span class="k">"estimate_hi"</span>: <span class="s">2200</span>,
+  <span class="k">"estimate_midpoint"</span>: <span class="s">1825</span>,
+  <span class="k">"confidence"</span>: <span class="s">0.78</span>,
+  <span class="k">"model_version"</span>: <span class="s">"houseaccount-pricing-v1.0.0"</span>
+}</pre>
+      </div>
+
+      <div class="card pad">
+        <h2>Try it</h2>
+        <pre class="code">curl -X POST $URL/pricing-estimate \
+  -H <span class="s">"Authorization: Bearer $SECRET"</span> \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{ "job_id":"demo","service_category":"Plumbing",
+       "zip_code":"78704",
+       "job_description":"Replace 50-gal water heater" }'</span></pre>
+        <button class="btn btn-ghost" id="runApi" style="margin-top:12px">▷ Run example</button>
+        <div id="apiOut" style="margin-top:12px;display:none">
+          <span class="tag tag-ok">200 OK · 0.74 s</span>
+          <pre class="code" style="margin-top:8px">{ <span class="k">"ok"</span>:true, <span class="k">"estimate_midpoint"</span>:1825, <span class="k">"confidence"</span>:0.78 }</pre>
+        </div>
+
+        <h2 style="margin-top:22px">Error responses</h2>
+        <table>
+          <thead><tr><th>Code</th><th>Body</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td><b>401</b></td><td><code>Unauthorized</code></td><td>missing/invalid bearer</td></tr>
+            <tr><td><b>400</b></td><td><code>&lt;field&gt; required</code></td><td>missing required field</td></tr>
+            <tr><td><b>400</b></td><td><code>Malformed JSON</code></td><td>bad body</td></tr>
+            <tr><td><b>405</b></td><td><code>Method not allowed</code></td><td>non-POST</td></tr>
+          </tbody>
+        </table>
+
+        <h2 style="margin-top:22px">Booking-flow integration</h2>
+        <p style="font-size:14px"><span class="status-dot dot-warn"></span>
+           Outbound POST to <code>pro.houseparty.dev</code> booking-create —
+           <b>configured (stub)</b>, awaiting staging token.</p>
+        <table>
+          <thead><tr><th>job_id</th><th>category</th><th class="num">midpoint</th><th class="num">conf</th><th>staging</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">abc123</td><td>Plumbing</td><td class="num">$1,825</td><td class="num">0.78</td><td><span class="status-dot dot-ok"></span>posted</td></tr>
+            <tr><td class="mono">def456</td><td>Pest Control</td><td class="num">$697</td><td class="num">0.71</td><td><span class="status-dot dot-ok"></span>posted</td></tr>
+            <tr><td class="mono">ghi789</td><td>Remodeling</td><td class="num">$8,400</td><td class="num">0.34</td><td><span class="status-dot dot-warn"></span>low-conf · routed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">HouseAccount AI Pricing Engine · prototype · Rails API + Python model service</div>
+</main>
+
+<script>
+  // ---- tab navigation ----
+  const nav = document.getElementById('nav');
+  nav.addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.screen;
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === target));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ---- example bookings (prefill + result preview) ----
+  const examples = {
+    'water-heater': {
+      cat:'Plumbing', sub:'Water Heater Replacement', zip:'78704',
+      desc:"50-gallon gas water heater stopped working last night, pilot light won't stay lit. Need replacement.",
+      range:'$1,450 – $2,200', mid:'$1,825', conf:0.78, lat:'740 ms',
+      tag:'Plumbing · in production', tagClass:'tag-info',
+      ood:'<span class="tag tag-ok">✓ In-distribution — all calibration checks passed</span>',
+      scope:[['Appliance','50-gal gas water heater'],['Failure',"pilot won't stay lit"],
+             ['Complexity','medium'],['Est. labor','3–4 hrs'],['Material tier','standard'],['Customer supplies parts','no']]
+    },
+    'bed-bugs': {
+      cat:'Pest Control', sub:'Bed bugs', zip:'33324',
+      desc:'Bed bug heat treatment, 2BR apartment',
+      range:'$487 – $1,169', mid:'$698', conf:0.71, lat:'690 ms',
+      tag:'Pest Control · in production', tagClass:'tag-info',
+      ood:'<span class="tag tag-ok">✓ In-distribution — all calibration checks passed</span>',
+      scope:[['Treatment','heat treatment'],['Area','2BR apartment'],['Complexity','medium'],
+             ['Est. labor','4–6 hrs'],['Material tier','standard'],['Customer supplies parts','no']]
+    },
+    'windows': {
+      cat:'Cleaning', sub:'Window washing (exterior)', zip:'75062',
+      desc:'Exterior window wash, 2-story, 20 windows',
+      range:'$172 – $345', mid:'$258', conf:0.83, lat:'650 ms',
+      tag:'Cleaning · in production', tagClass:'tag-info',
+      ood:'<span class="tag tag-ok">✓ In-distribution — all calibration checks passed</span>',
+      scope:[['Surface','exterior windows'],['Quantity','20 windows'],['Height','2-story'],
+             ['Complexity','low'],['Est. labor','2–3 hrs'],['Customer supplies parts','n/a']]
+    },
+    'ood': {
+      cat:'Remodeling', sub:'Whole-home renovation', zip:'90210',
+      desc:'Full gut renovation of a 3,200 sq ft home — kitchen, 3 baths, flooring throughout, new electrical.',
+      range:'$74,000 – $148,000', mid:'$108,000', conf:0.31, lat:'810 ms',
+      tag:'Remodeling · outside production set', tagClass:'tag-warn',
+      ood:'<span class="tag tag-warn">⚠ Out-of-distribution — midpoint &gt; $5k &amp; non-production category · confidence forced &lt; 0.5 · passed through, not rejected</span>',
+      scope:[['Scope','full gut renovation'],['Area','3,200 sq ft'],['Rooms','kitchen + 3 baths'],
+             ['Complexity','high'],['Est. labor','600+ hrs'],['Material tier','premium']]
+    }
+  };
+
+  function applyExample(key) {
+    const ex = examples[key]; if (!ex) return;
+    document.getElementById('f-cat').value = ex.cat;
+    document.getElementById('f-sub').value = ex.sub;
+    document.getElementById('f-zip').value = ex.zip;
+    document.getElementById('f-desc').value = ex.desc;
+    renderResult(ex);
+  }
+
+  function renderResult(ex) {
+    document.getElementById('r-range').textContent = ex.range;
+    document.getElementById('r-mid').textContent = ex.mid;
+    document.getElementById('r-conf').textContent = ex.conf.toFixed(2);
+    document.getElementById('r-latency').textContent = ex.lat;
+    document.getElementById('r-needle').style.left = (ex.conf*100) + '%';
+    const tag = document.getElementById('r-cat-tag');
+    tag.className = 'tag ' + ex.tagClass; tag.textContent = ex.tag;
+    document.getElementById('r-ood').innerHTML = ex.ood;
+    document.getElementById('r-scope').innerHTML =
+      ex.scope.map(([k,v]) => `<div><b>${k}:</b> ${v}</div>`).join('');
+  }
+
+  document.querySelectorAll('.chip').forEach(c =>
+    c.addEventListener('click', () => applyExample(c.dataset.example)));
+
+  document.getElementById('getEstimate').addEventListener('click', () => {
+    const btn = document.getElementById('getEstimate');
+    btn.textContent = 'Pricing…'; btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = 'Get estimate'; btn.disabled = false;
+      document.getElementById('resultCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+    }, 600);
+  });
+
+  document.getElementById('runApi').addEventListener('click', () => {
+    document.getElementById('apiOut').style.display = 'block';
+  });
+</script>
+</body>
+</html>
