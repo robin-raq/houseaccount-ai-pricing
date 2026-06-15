@@ -14,8 +14,17 @@ import os
 
 _MODEL = os.environ.get("PRICING_SCOPE_MODEL", "gpt-4o-mini")
 _TIMEOUT_S = float(os.environ.get("PRICING_SCOPE_TIMEOUT_S", "1.5"))
+_MAX_CACHE = int(os.environ.get("PRICING_SCOPE_CACHE_MAX", "5000"))
 _cache: dict[str, dict[str, str]] = {}
 _client = None  # reused across calls so the connection pool stays warm (SLA)
+
+
+def _remember(key: str, scope: dict[str, str]) -> dict[str, str]:
+    """Insert into the scope cache, evicting the oldest entry past the size cap."""
+    if key not in _cache and len(_cache) >= _MAX_CACHE:
+        _cache.pop(next(iter(_cache)))  # dicts preserve insertion order -> FIFO eviction
+    _cache[key] = scope
+    return scope
 
 
 def _client_for():
@@ -69,5 +78,4 @@ def extract_scope_llm(
         return None
 
     scope = {str(key): str(value) for key, value in payload.items() if value is not None}
-    _cache[cache_key] = scope
-    return scope
+    return _remember(cache_key, scope)

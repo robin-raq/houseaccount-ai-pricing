@@ -60,4 +60,5 @@ def load_clean(path: Path | str | None = None) -> pd.DataFrame:
 
 
 def priced(df: pd.DataFrame) -> pd.DataFrame:
-    return df[df["final_price"].notna()].copy()
+    # Positive prices only — the log-space training and conformal math require > 0.
+    return df[df["final_price"].notna() & (df["final_price"] > 0)].copy()
