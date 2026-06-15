@@ -72,7 +72,7 @@ Evaluation and Model Card screens.
 ## Outbound: the booking-flow integration
 
 After producing an estimate, the demo path makes a **best-effort** POST to the HouseAccount
-booking-create staging endpoint (`STAGING_BOOKINGS_URL` + `STAGING_BOOKINGS_TOKEN`). It never
+booking-create staging endpoint (`STAGING_BOOKINGS_URL` + `STAGING_APP_NAME` + `STAGING_SIGNING_SECRET` (HMAC-signed)). It never
 blocks or fails the response: with no URL configured it reports `skipped`; on error it reports the
 error and moves on. This is the "booking input in → price out → posted to staging" loop; drop in
 real staging credentials to activate it.

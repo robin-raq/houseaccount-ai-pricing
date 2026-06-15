@@ -34,7 +34,10 @@ command and health check.
     public; the public URL also works for a quick demo.
   - `SECRET_KEY_BASE` — `openssl rand -hex 64`.
   - `RAILS_ENV=production`.
-  - Optional: `STAGING_BOOKINGS_URL`, `STAGING_BOOKINGS_TOKEN` to activate the outbound post.
+  - Optional outbound booking-flow integration (`POST /api/bookings`): `STAGING_BOOKINGS_URL`,
+    `STAGING_APP_NAME`, `STAGING_SIGNING_SECRET`. Auth is HouseAccount's signed-request scheme
+    (`App-Name` + `App-Timestamp` + `App-Signature = HMAC-SHA256(secret, "<timestamp>.<body>")`).
+    Leave unset to run the documented stub (status `skipped`).
 - Starts `bundle exec rails server -b 0.0.0.0 -p $PORT`; serves the demo UI and the contract.
 - Health check: `/up`. This service's public URL is the demo.
 
