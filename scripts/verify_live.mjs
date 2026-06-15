@@ -26,6 +26,13 @@ const conf = await page.textContent('#resultBody .conf-val');
 console.log('estimate rendered:', price.trim(), '| confidence', conf.trim());
 await page.screenshot({ path: 'design/_live_estimate.png', fullPage: false });
 
+// 2b) manual field edit + Get estimate button (a novel description, not a cached pill)
+await page.fill('#f-zip', '60614');
+await page.fill('#f-desc', 'Install a new 240V outlet for an EV charger in the garage');
+await page.click('#getBtn');
+await page.waitForFunction(() => document.querySelector('#resultBody .price-big'), { timeout: 15000 });
+console.log('manual edit + Get estimate:', (await page.textContent('#resultBody .price-big')).trim());
+
 // 3) OOD example
 await page.click('.chip[data-ex="ood"]');
 await page.waitForTimeout(2500);
