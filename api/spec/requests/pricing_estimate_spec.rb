@@ -87,6 +87,14 @@ RSpec.describe "POST /pricing-estimate", type: :request do
     expect(response.parsed_body).to eq("error" => "Malformed JSON")
   end
 
+  it "returns 503 (not 500) when the model service is unreachable" do
+    allow(ModelServiceClient).to receive(:predict).and_raise(ModelServiceClient::Error, "down")
+    post "/pricing-estimate", params: valid_body.to_json, headers: auth_headers
+
+    expect(response).to have_http_status :service_unavailable
+    expect(response.parsed_body).to eq("error" => "Pricing service unavailable")
+  end
+
   it "returns 405 for a non-POST method" do
     get "/pricing-estimate", headers: auth_headers
 
