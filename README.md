@@ -1,5 +1,8 @@
 # HouseAccount AI Pricing Model
 
+**Live demo:** <https://api-production-fcf4.up.railway.app/>  
+**Demo video:** <https://youtu.be/t1AITpcG4go>
+
 An AI pricing engine for the HouseAccount marketplace. Given a homeowner's booking —
 a service category, a ZIP, and a free-text description of the job — it returns a price
 range, a single point estimate, and a **calibrated confidence**, in well under two
