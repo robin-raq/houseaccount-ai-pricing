@@ -2,7 +2,8 @@
 # OpenAI key or hammer the model service. The bearer-protected contract is not throttled.
 Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
-Rack::Attack.throttle("demo/ip", limit: 20, period: 60) do |request|
+# Each demo POST creates a real staging booking + an OpenAI call, so keep the ceiling low.
+Rack::Attack.throttle("demo/ip", limit: 8, period: 60) do |request|
   request.ip if request.post? && request.path.start_with?("/demo")
 end
 

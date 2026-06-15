@@ -8,7 +8,7 @@ require "openssl"
 # configured it returns "skipped", and any failure is reported, never raised — the
 # estimate response must not depend on the booking flow being reachable.
 class StagingClient
-  TIMEOUT_SECONDS = 2.0
+  TIMEOUT_SECONDS = 1.5
   DEMO_PHONE = "5555550100".freeze # the pricing request is anonymized; booking needs a phone
 
   def self.post_estimate(payload, estimate)
@@ -31,6 +31,7 @@ class StagingClient
     response = post booking_body(payload, estimate).to_json
     response.code.to_i.between?(200, 299) ? "posted" : "error #{response.code}"
   rescue StandardError => error
+    Rails.logger.warn "StagingClient #{error.class}: #{error.message}"
     "error #{error.class}"
   end
 
@@ -68,6 +69,7 @@ private
     http.use_ssl = uri.scheme == "https"
     http.open_timeout = TIMEOUT_SECONDS
     http.read_timeout = TIMEOUT_SECONDS
+    http.write_timeout = TIMEOUT_SECONDS
     http
   end
 end
