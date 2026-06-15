@@ -104,3 +104,10 @@ the skill keeps so the human can follow along without being interrupted.
   railway.toml startCommand (Puma binds $PORT). Both fixed via .railwayignore (committed).
 - Deployed verification: UI 200; /demo/model live numbers via private link; real-model estimate $1824 @0.86, 1278ms;
   contract 200 w/ bearer (1.73s incl warmup) / 401 without; Playwright live-verify green, 0 console errors, both bars BEAT.
+
+## Staging integration activated
+- User provided base URL (pro.houseparty.dev) + App-Name (gauntlet) + signing secret (in untracked .env).
+- Found the real contract from the API reference: POST /api/bookings, HMAC-signed (App-Name/App-Timestamp/
+  App-Signature = HMAC-SHA256(secret, "<ts>.<body>")), full booking payload {name,zip,phone,summary,estimate{min,max}}.
+- Rewrote StagingClient accordingly. Local signed POST -> HTTP 201 Created (booking id 366). Set the 3 vars as
+  Railway secrets on `api`, redeployed. Deployed demo now returns staging_status="posted" (~1s warm). secret_guard clean.
