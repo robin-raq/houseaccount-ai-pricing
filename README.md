@@ -3,9 +3,28 @@
 **Live demo:** <https://api-production-fcf4.up.railway.app/>  
 **Demo video:** <https://youtu.be/t1AITpcG4go>
 
+## Executive summary
+
+This project helps HouseAccount make better booking-time pricing decisions. Given
+a service category, ZIP code, and job description, it returns a price range,
+midpoint estimate, confidence score, and model version that can support customer
+quotes, provider routing, and human review.
+
+The business value is simple: move routine jobs through booking faster, flag risky
+jobs before they create pricing surprises, and give the marketplace a clearer
+signal for when to trust the estimate versus when to escalate. The model improves
+real-job pricing accuracy while staying honest about uncertainty and
+out-of-distribution cases.
+
+Technically, the system corrects HouseAccount's existing estimate instead of
+pricing from scratch. In leakage-free cross-validation, it lowers real-job MAPE
+from 35.87% to 31.08% and blended MAPE from 11.56% to 10.92%. It ships with a
+bearer-authenticated API, browser playground, reproducible verification script,
+and documented limitations so reviewers can validate the work directly.
+
 An AI pricing engine for the HouseAccount marketplace. Given a homeowner's booking —
 a service category, a ZIP, and a free-text description of the job — it returns a price
-range, a single point estimate, and a **calibrated confidence**, in well under two
+range, a single point estimate, and a **confidence score**, in well under two
 seconds. It's built to beat HouseAccount's existing pricing baseline on the jobs that
 matter most: real, messy, one-off requests.
 
