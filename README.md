@@ -22,10 +22,7 @@ from 35.87% to 31.08% and blended MAPE from 11.56% to 10.92%. It ships with a
 bearer-authenticated API, browser playground, reproducible verification script,
 and documented limitations so reviewers can validate the work directly.
 
-An AI pricing engine for the HouseAccount marketplace. Given a homeowner's booking —
-a service category, a ZIP, and a free-text description of the job — it returns a price
-range, a single point estimate, and a **confidence score**, in well under two
-seconds. It's built to beat HouseAccount's existing pricing baseline on the jobs that
+The engine is built to beat HouseAccount's existing pricing baseline on the jobs that
 matter most: real, messy, one-off requests.
 
 The headline result, measured by leakage-free cross-validation (mean over 20 seeds):
